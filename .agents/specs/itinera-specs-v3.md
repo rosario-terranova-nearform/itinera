@@ -2,7 +2,9 @@
 
 > **Stack**: React · TypeScript · Vite · Material UI · Supabase (DB, Auth, Storage, Realtime, Edge Functions)
 >
-> **Assunzioni consolidate**: 3 rappresentanti · admin singolo · modifica appuntamento libera (senza approvazione UC) · notifiche in-app + email · foglio firma come file caricato (foto/PDF)
+> **Design di riferimento**: `.agents/design/DESIGN.md` (token colore, tipografia Inter, layout admin/rep). Mockup per schermata in `.agents/design/admin-uc/` e `.agents/design/user-represenative/`.
+>
+> **Assunzioni consolidate**: 3 rappresentanti · admin singolo · modifica appuntamento libera (senza approvazione UC) · notifiche in-app + email · foglio firma come file caricato (foto/PDF) · anagrafica aziende in sola lettura per il rep
 
 ---
 
@@ -16,8 +18,8 @@
 
 | Ruolo              | N° account | Descrizione                                                              |
 | ------------------ | ---------- | ------------------------------------------------------------------------ |
-| **Admin (UC)**     | 1          | Crea e gestisce appuntamenti, anagrafica aziende, visualizza fogli firma |
-| **Representative** | 3          | Vede il proprio calendario, gestisce appuntamenti, carica fogli firma    |
+| **Admin (UC)**     | 1          | Crea e gestisce appuntamenti, anagrafica aziende, rappresentanti, portale documenti, impostazioni |
+| **Representative** | 3          | Vede il proprio calendario, consulta anagrafica aziende (sola lettura), gestisce appuntamenti, carica fogli firma, area documenti personale |
 
 Tutti gli account sono **pre-creati** (nessuna registrazione pubblica). L'UC invita i rappresentanti via email da Supabase Auth.
 
@@ -37,6 +39,9 @@ Tutti gli account sono **pre-creati** (nessuna registrazione pubblica). L'UC inv
 | A06 | Ricevere notifica (in-app + email) quando il rep conferma o modifica un appuntamento      | Resto sempre aggiornato sullo stato dell'agenda                   |
 | A07 | Visualizzare e scaricare il foglio firma caricato dal rep                                 | Ho prova documentale delle visite avvenute                        |
 | A08 | Gestire l'anagrafica delle aziende clienti (CRUD)                                         | Posso selezionarle rapidamente alla creazione degli appuntamenti  |
+| A09 | Gestire i rappresentanti (invito, attivazione/disattivazione)                             | Controllo chi può accedere all'app                                |
+| A10 | Consultare il portale documenti con tutti i fogli firma caricati                          | Revisiono le prove di visita in un unico punto                      |
+| A11 | Configurare preferenze di notifica di sistema (MVP: solo visualizzazione o toggle base)    | Adatto gli avvisi al flusso operativo UC                            |
 
 ### Rappresentante – User
 
@@ -49,7 +54,9 @@ Tutti gli account sono **pre-creati** (nessuna registrazione pubblica). L'UC inv
 | R05 | Ricevere notifica se l'UC modifica o annulla un appuntamento                             | Sia sempre sincronizzato sulle ultime decisioni           |
 | R06 | Caricare il foglio firma dopo una visita (foto o PDF)                                    | Invio prova all'UC dall'app                               |
 | R07 | Vedere il dettaglio di ogni appuntamento (azienda, indirizzo, note UC)                   | Arrivi preparato alla visita                              |
-| R08 | Modificare il mio profilo (nome, telefono, avatar)                                       | Mantenga i dati aggiornati                                |
+| R08 | Modificare il mio profilo (nome, cognome, telefono, avatar; email in sola lettura)     | Mantenga i dati aggiornati                                |
+| R09 | Consultare l'anagrafica aziende (sola lettura, ricerca)                                  | Trovi rapidamente indirizzo e referente prima della visita |
+| R10 | Vedere e caricare documenti dalla sezione "I miei documenti"                             | Gestisca i fogli firma anche fuori dal dettaglio appuntamento |
 
 ---
 
@@ -137,14 +144,17 @@ CREATE TYPE notification_type AS ENUM (
 -- Profili (estende auth.users)
 CREATE TABLE profiles (
   id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name   TEXT NOT NULL,
+  first_name  TEXT NOT NULL,
+  last_name   TEXT NOT NULL,
   role        user_role NOT NULL DEFAULT 'representative',
+  job_title   TEXT,                    -- es. "Rappresentante commerciale" (solo rep, opzionale)
   phone       TEXT,
   avatar_url  TEXT,
   is_active   BOOLEAN NOT NULL DEFAULT true,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- Nome visualizzato in UI: first_name || ' ' || last_name
 
 -- Aziende clienti
 CREATE TABLE companies (
@@ -153,11 +163,14 @@ CREATE TABLE companies (
   address         TEXT,
   city            TEXT,
   province        TEXT,   -- es. "NA", "RM"
+  postal_code     TEXT,
+  segment         TEXT,   -- es. "Enterprise" | "Mid-Market" | "SMB" (tag UI in rubrica rep)
   contact_person  TEXT,
+  contact_title   TEXT,   -- es. "Direttore acquisti"
   phone           TEXT,
   email           TEXT,
   notes           TEXT,
-  is_active       BOOLEAN NOT NULL DEFAULT true,
+  is_active       BOOLEAN NOT NULL DEFAULT true,  -- false = Inattiva in UI admin
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -167,8 +180,10 @@ CREATE TABLE appointments (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id          UUID NOT NULL REFERENCES companies(id),
   representative_id   UUID NOT NULL REFERENCES profiles(id),  -- riferimento al rappresentante assegnato
-  scheduled_datetime  TIMESTAMPTZ NOT NULL,   -- data/ora corrente (aggiornata da UC o rep)
+  scheduled_datetime  TIMESTAMPTZ NOT NULL,   -- inizio visita (aggiornato da UC o rep)
+  end_datetime        TIMESTAMPTZ,            -- fine visita (opzionale; se assente UI mostra solo inizio)
   original_datetime   TIMESTAMPTZ NOT NULL,   -- data/ora proposta inizialmente dall'UC
+  reference_code      TEXT UNIQUE,            -- es. VIS-49201; generato in app se non valorizzato
   status              appointment_status NOT NULL DEFAULT 'pending',
   notes               TEXT,                   -- note visibili al rep
   internal_notes      TEXT,                   -- note interne UC (non visibili al rep)
@@ -224,6 +239,7 @@ CREATE INDEX idx_appointments_scheduled     ON appointments(scheduled_datetime);
 CREATE INDEX idx_appointments_representative ON appointments(representative_id);
 CREATE INDEX idx_notifications_user_unread  ON notifications(user_id, is_read) WHERE is_read = false;
 CREATE INDEX idx_modifications_appointment  ON appointment_modifications(appointment_id);
+CREATE INDEX idx_appointments_reference     ON appointments(reference_code) WHERE reference_code IS NOT NULL;
 ```
 
 ### 5.4 Row Level Security (RLS)
@@ -255,9 +271,10 @@ CREATE POLICY "rep_own_appointments" ON appointments FOR SELECT USING (
 );
 CREATE POLICY "rep_update_own" ON appointments FOR UPDATE USING (
   representative_id = auth.uid()
+  AND status IN ('pending', 'confirmed')   -- non modificabile se cancelled o completed
 ) WITH CHECK (
   representative_id = auth.uid()
-  AND status IN ('confirmed', 'completed')  -- rep può confermare, modificare data, o completare (caricando foglio firma)
+  AND status IN ('confirmed', 'completed') -- rep non può annullare né riportare a pending
 );
 
 -- appointment_modifications: admin tutto, rep inserisce/legge le sue
@@ -299,6 +316,14 @@ Policy Storage:
   - INSERT: utente autenticato con ruolo 'representative'
   - SELECT: utente autenticato (rep solo percorsi del proprio appointment_id, admin tutti)
   - DELETE: solo admin
+
+Bucket name : avatars
+Accesso     : pubblico in lettura (URL pubblico) o signed URL; path `{user_id}/avatar.{ext}`
+Max file size: 2 MB
+MIME consentiti: image/jpeg, image/png, image/webp
+Policy Storage:
+  - INSERT/UPDATE: utente autenticato solo sul proprio `{user_id}/`
+  - SELECT: tutti gli autenticati (per mostrare avatar in tabella admin)
 ```
 
 ---
@@ -307,12 +332,16 @@ Policy Storage:
 
 ### Stati e colori UI
 
-| Stato       | Significato                              | Colore MUI          |
-| ----------- | ---------------------------------------- | ------------------- |
-| `pending`   | In attesa di risposta del rep            | `warning` (arancio) |
-| `confirmed` | Confermato (data originale o modificata) | `success` (verde)   |
-| `completed` | Visita avvenuta, foglio firma caricato   | `primary` (blu)     |
-| `cancelled` | Annullato dall'UC                        | `error` (rosso)     |
+Allineati al design system (`.agents/design/DESIGN.md`):
+
+| Stato       | Significato                              | Token / hex design   | MUI (override tema) |
+| ----------- | ---------------------------------------- | -------------------- | ------------------- |
+| `pending`   | In attesa di risposta del rep            | `status-pending` `#ED6C02` | `warning` |
+| `confirmed` | Confermato (data originale o modificata) | `status-confirmed` `#2E7D32` | `success` |
+| `completed` | Visita avvenuta, foglio firma caricato   | `status-completed` `#1976D2` | `primary` |
+| `cancelled` | Annullato dall'UC                        | `status-cancelled` `#D32F2F` | `error` |
+
+> **Nota mockup**: etichette come "Draft" nei design sono solo dati dimostrativi e corrispondono a `pending`.
 
 ### Diagramma transizioni
 
@@ -333,9 +362,9 @@ Policy Storage:
                          │  Notifica → UC (in-app + email)
                          ▼  [tipo diverso: confirmed vs modified]
                     ┌──────────┐
-                    │CONFIRMED │◄──── UC modifica → torna PENDING
-                    │          │      (notifica → Rep)
-                    └────┬─────┘
+                    │CONFIRMED │◄──── UC modifica (da confirmed) → PENDING
+                    │          │      UC modifica (da pending) → resta PENDING
+                    └────┬─────┘      (sempre notifica → Rep)
                          │ Rep carica foglio firma
                          │ Notifica → UC (in-app + email)
                          ▼
@@ -349,16 +378,35 @@ Policy Storage:
 
 ### Matrice transizioni
 
-| Da                    | A           | Chi | Azione                                     |
-| --------------------- | ----------- | --- | ------------------------------------------ |
-| `pending`             | `confirmed` | Rep | Accetta senza cambiare data/ora            |
-| `pending`             | `confirmed` | Rep | Modifica data/ora + inserisce nota         |
-| `confirmed`           | `confirmed` | Rep | Ri-modifica data/ora + inserisce nota      |
-| `confirmed`           | `pending`   | UC  | Modifica appuntamento (UC cambia qualcosa) |
-| `confirmed`           | `completed` | Rep | Carica foglio firma                        |
-| `pending`/`confirmed` | `cancelled` | UC  | Annulla appuntamento                       |
+| Da                    | A           | Chi | Azione / condizione                                      |
+| --------------------- | ----------- | --- | -------------------------------------------------------- |
+| `pending`             | `confirmed` | Rep | Conferma senza cambiare `scheduled_datetime`             |
+| `pending`             | `confirmed` | Rep | Modifica data/ora + nota obbligatoria                    |
+| `confirmed`           | `confirmed` | Rep | Ri-modifica data/ora + nota obbligatoria                 |
+| `pending`             | `pending`   | UC  | Modifica campi (data, azienda, rep, note)                |
+| `confirmed`           | `pending`   | UC  | Modifica campi dopo conferma rep                         |
+| `confirmed`           | `completed` | Rep | Carica foglio firma (solo da dettaglio o da documenti)   |
+| `pending`/`confirmed` | `cancelled` | UC  | Annulla appuntamento                                     |
+| `completed`           | —           | —   | Stato finale: nessuna transizione                        |
+| `cancelled`           | —           | —   | Stato finale: nessuna transizione                        |
 
-> **Nota**: Ogni modifica di data/ora (da parte di chiunque) viene logghata in `appointment_modifications` per tenere traccia dello storico.
+> **Nota**: Ogni modifica di `scheduled_datetime` (UC o rep) genera una riga in `appointment_modifications`. La conferma senza cambio data **non** crea una modifica.
+
+### Azioni UI per stato (rappresentante)
+
+| Stato       | Conferma visita | Modifica data/ora | Carica foglio firma | Note |
+| ----------- | --------------- | ----------------- | ------------------- | ---- |
+| `pending`   | Sì              | Sì                | No (disabilitato)   | Mockup mostra il bottone upload: in implementazione resta nascosto o disabilitato finché non `confirmed` |
+| `confirmed` | No              | Sì                | Sì                  | Dopo upload → `completed` |
+| `completed` | No              | No                | No (già caricato)   | Solo visualizzazione foglio |
+| `cancelled` | No              | No                | No                  | Solo lettura |
+
+### Notifiche per modifica UC
+
+| Stato prima modifica UC | Stato dopo | Tipo notifica        |
+| ----------------------- | ---------- | -------------------- |
+| `pending`               | `pending`  | `appointment_updated` |
+| `confirmed`             | `pending`  | `appointment_updated` |
 
 ---
 
@@ -408,6 +456,21 @@ Mutation TanStack Query → Supabase (UPDATE/INSERT)
 | `appointment_modified`  | `🔄 Data modificata da {rep} – {azienda}`         | Vecchia data → Nuova data, nota rep              |
 | `signed_sheet_uploaded` | `📎 Foglio firma ricevuto – {azienda} del {data}` | Link diretto al documento                        |
 
+### 7.4 Stati documento in UI (derivati, non enum DB)
+
+| Contesto | Etichetta UI | Regola |
+| -------- | ------------ | ------ |
+| Rep – lista documenti | `In elaborazione` | `signed_sheets` esiste e `viewed_by_admin = false` |
+| Rep – lista documenti | `Ricevuto da UC` | `viewed_by_admin = true` |
+| Admin – portale documenti | `Non letto` | `viewed_by_admin = false` |
+| Admin – portale documenti | `Visualizzato` | `viewed_by_admin = true` |
+
+I contatori "In revisione / Approvati" nel mockup rep sono aggregati su queste regole (MVP: nessuna tabella `review_status` separata).
+
+### 7.5 Impostazioni notifiche (admin)
+
+Schermata impostazioni (design `admin_system_settings`): toggle per avvisi immediati su nuovo appuntamento e upload documento. **Fuori MVP**: email riepilogo giornaliero alle 08:00 (solo documentato, non implementato in v3).
+
 ---
 
 ## 8. Struttura Cartelle
@@ -431,8 +494,13 @@ src/
 │   ├── appointments/
 │   │   ├── AppointmentCard.tsx
 │   │   ├── AppointmentForm.tsx       # Form create/edit (admin)
-│   │   ├── AppointmentTimeline.tsx   # Storico modifiche
-│   │   └── ModificationForm.tsx      # Form rep: modifica data + nota
+│   │   ├── AppointmentTimeline.tsx   # Audit trail (assegnazione, modifiche, upload)
+│   │   ├── VisitInfoCard.tsx         # Dettaglio visita + mappa/indicazioni
+│   │   └── RescheduleForm.tsx        # Form rep: nuova data, ora, motivo (campi separati)
+│   ├── documents/
+│   │   ├── DocumentUploadZone.tsx
+│   │   ├── DocumentListItem.tsx
+│   │   └── DocumentStatusSummary.tsx
 │   ├── calendar/
 │   │   └── CalendarView.tsx          # FullCalendar wrapper
 │   ├── notifications/
@@ -458,16 +526,22 @@ src/
 │   │   └── ResetPasswordPage.tsx
 │   ├── admin/
 │   │   ├── AdminDashboardPage.tsx
-│   │   ├── CompaniesPage.tsx
-│   │   ├── CompanyDetailPage.tsx
+│   │   ├── CalendarPage.tsx              # Pianificazione
+│   │   ├── CreateAppointmentPage.tsx     # oppure dialog da calendario/lista
 │   │   ├── AppointmentsPage.tsx
 │   │   ├── AppointmentDetailPage.tsx
-│   │   └── CalendarPage.tsx
+│   │   ├── CompaniesPage.tsx
+│   │   ├── CompanyDetailPage.tsx
+│   │   ├── RepresentativesPage.tsx
+│   │   ├── DocumentsPortalPage.tsx
+│   │   └── AdminSettingsPage.tsx
 │   └── representative/
 │       ├── RepDashboardPage.tsx
-│       ├── RepCalendarPage.tsx
-│       ├── RepAppointmentsPage.tsx
+│       ├── RepCalendarPage.tsx           # Pianificazione (vista giorno/settimana/mese)
 │       ├── RepAppointmentDetailPage.tsx
+│       ├── RescheduleAppointmentPage.tsx # Modifica data/ora + motivo
+│       ├── RepCompaniesPage.tsx          # Rubrica aziende (sola lettura)
+│       ├── RepDocumentsPage.tsx
 │       └── RepProfilePage.tsx
 │
 ├── store/
@@ -507,26 +581,45 @@ supabase/
 
 ## 9. Viste UI – Descrizione Pagine
 
-### Admin
+Navigazione allineata ai mockup (sidebar admin 240px; rep mobile con bottom nav 56px: **Dashboard · Calendario · Profilo**).
 
-| Pagina                 | Route                     | Contenuto                                                                                                                       |
-| ---------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Dashboard              | `/admin`                  | KPI cards (appuntamenti oggi, questa settimana, in attesa, completati questo mese), ultimi 5 appuntamenti, ultimi 3 fogli firma |
-| Calendario             | `/admin/calendar`         | FullCalendar mensile/settimanale, colori per stato, click → drawer dettaglio                                                    |
-| Appuntamenti           | `/admin/appointments`     | Tabella con filtri (stato, data da/a), azione "Crea"                                                                            |
-| Dettaglio appuntamento | `/admin/appointments/:id` | Info complete, timeline modifiche, sezione foglio firma, azioni modifica/annulla                                                |
-| Aziende                | `/admin/companies`        | Tabella ricercabile, azione "Aggiungi azienda"                                                                                  |
-| Dettaglio azienda      | `/admin/companies/:id`    | Info azienda, storico appuntamenti con quell'azienda                                                                            |
+### Admin (UC)
+
+| Pagina | Route | Mockup design | Contenuto |
+| ------ | ----- | ------------- | --------- |
+| Dashboard | `/admin` | `admin_dashboard_uc` | KPI (oggi, in attesa, completati mese), tabella attività recente, CTA "+ Nuovo appuntamento", ricerca globale appuntamenti |
+| Pianificazione | `/admin/calendar` | `admin_scheduling_calendar` | Calendario mese/settimana/giorno; colori stato; click → drawer/dettaglio; drag & drop (admin) |
+| Crea appuntamento | `/admin/appointments/new` | `create_new_appointment_admin` | Form: azienda (autocomplete), rappresentante, data, ora, note rep, note interne UC |
+| Appuntamenti | `/admin/appointments` | — | Tabella con filtri (stato, rep, periodo), link a dettaglio |
+| Dettaglio appuntamento | `/admin/appointments/:id` | — | Info, audit trail, foglio firma, modifica/annulla |
+| Aziende | `/admin/companies` | `admin_companies_management` | Tabella con filtri stato/provincia, CRUD, soft delete |
+| Dettaglio azienda | `/admin/companies/:id` | — | Scheda azienda + storico appuntamenti |
+| Rappresentanti | `/admin/representatives` | `admin_representative_management` | Elenco rep, invito, attivo/inattivo, metriche sintetiche |
+| Documenti | `/admin/documents` | `admin_documents_portal` | KPI upload/non letti, tabella documenti (azienda, rep, data, stato lettura), filtro/ordinamento |
+| Impostazioni | `/admin/settings` | `admin_system_settings` | Inviti rep, toggle notifiche (MVP parziale) |
+
+**Sidebar admin**: Dashboard · Pianificazione · Aziende · Rappresentanti · Documenti · Impostazioni
 
 ### Rappresentante
 
-| Pagina                 | Route                   | Contenuto                                                                                                      |
-| ---------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Dashboard              | `/rep`                  | Prossimo appuntamento (card prominente), appuntamenti della settimana, notifiche non lette                     |
-| Calendario             | `/rep/calendar`         | FullCalendar (solo appuntamenti propri), click → drawer dettaglio                                              |
-| Appuntamenti           | `/rep/appointments`     | Lista con filtri, badge stato                                                                                  |
-| Dettaglio appuntamento | `/rep/appointments/:id` | Info visita (azienda, indirizzo, orario, note UC), azioni (conferma / modifica data / carica foglio), timeline |
-| Profilo                | `/rep/profile`          | Foto, nome, telefono – tutto modificabile                                                                      |
+| Pagina | Route | Mockup design | Contenuto |
+| ------ | ----- | ------------- | --------- |
+| Dashboard | `/rep` | `representative_dashboard` | Card prossima visita (countdown, indirizzo, contatto), aggiornamenti recenti, tabella settimana |
+| Pianificazione | `/rep/calendar` | `representative_scheduling_calendar` | Mini-calendario, riepilogo giornata per stato, timeline giornaliera (viste giorno/settimana/mese) |
+| Dettaglio appuntamento | `/rep/appointments/:id` | `appointment_detail_actions` | Codice visita, info visita (contatto con telefono, mappa/indicazioni), note UC, audit trail, azioni per stato |
+| Riprogramma | `/rep/appointments/:id/reschedule` | `modify_appointment_representative` | Dettaglio attuale (sola lettura) + nuova data, nuova ora, motivo obbligatorio |
+| Aziende | `/rep/companies` | `client_directory_rep` | Griglia/card rubrica sola lettura (segmento, indirizzo, referente, telefono) |
+| Documenti | `/rep/documents` | `my_personal_documents_representative` | Upload zone, riepilogo stati, elenco upload recenti con download |
+| Profilo | `/rep/profile` | `personal_profile_settings` | Nome, cognome, telefono, avatar; email read-only; cambio password |
+
+**Sidebar rep (tablet/desktop)**: Dashboard · Pianificazione · Aziende · Documenti · Impostazioni  
+**Bottom nav rep (mobile)**: Dashboard · Calendario · Profilo
+
+> Il rep **non** crea appuntamenti: eventuali CTA "+ Nuova visita" nei mockup sono fuori scope e non vanno implementate.
+
+### Tema UI (§ T0.7)
+
+Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary `#005dac`, font `Inter`, status chip con sfondo 10–15% opacità e testo ad alto contrasto.
 
 ---
 
@@ -544,7 +637,7 @@ supabase/
 | T0.4 | Creazione progetto su Supabase dashboard, abilitare Auth (email), Storage                  | Progetto Supabase attivo   |
 | T0.5 | File `.env` con `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` + `.env.example` committato | Config env                 |
 | T0.6 | `src/lib/supabase.ts`: `createClient<Database>()` tipizzato                                | Client riutilizzabile      |
-| T0.7 | `src/theme/muiTheme.ts`: palette brand Itinera, tipografia, overrides MUI                  | Tema applicato globalmente |
+| T0.7 | `src/theme/muiTheme.ts`: token da `.agents/design/DESIGN.md` (primary `#005dac`, Inter, status hex, chip 10–15% opacity) | Tema allineato ai mockup |
 
 ---
 
@@ -572,8 +665,8 @@ supabase/
 | T2.4 | `useAuth.ts`: hook wrapper dello store + inizializzazione `supabase.auth.onAuthStateChange`                       | Hook riutilizzabile |
 | T2.5 | `ProtectedRoute.tsx`: se non autenticato redirect a `/login`; se autenticato controlla ruolo e reindirizza        | Guard route         |
 | T2.6 | `AppRouter.tsx`: route pubbliche (`/login`, `/reset-password`), route admin (`/admin/*`), route rep (`/rep/*`)    | Routing completo    |
-| T2.7 | Pagina `AdminUsersPage.tsx` (admin): tabella rappresentanti con email, nome, stato attivo; azioni "Invita nuovo rep" (Supabase Auth invite user) e "Disattiva" (setta `is_active=false` su profiles) | Gestione account rep |
-| T2.8 | Aggiungere colonna `is_active BOOLEAN NOT NULL DEFAULT true` alla tabella `profiles`; aggiornare RLS per escludere utenti disattivati dal login (check aggiuntivo in app) | Disattivazione account |
+| T2.7 | `RepresentativesPage.tsx` (`/admin/representatives`): tabella rep (nome, email, telefono, stato); "Invita nuovo rep" (Supabase Auth invite); "Disattiva" (`is_active=false`) | Gestione account rep |
+| T2.8 | Colonna `is_active` su `profiles` + check in app: utenti disattivati non accedono (logout forzato se sessione esistente) | Disattivazione account |
 
 ---
 
@@ -582,9 +675,9 @@ supabase/
 | ID   | Task                                                                                                           | Output atteso       |
 | ---- | -------------------------------------------------------------------------------------------------------------- | ------------------- |
 | T3.1 | `AdminLayout.tsx`: Drawer laterale persistente (240px) + `<Outlet />` per il contenuto                         | Layout admin        |
-| T3.2 | `AdminSidebar.tsx`: logo Itinera, voci (Dashboard, Calendario, Appuntamenti, Aziende), voce attiva evidenziata | Sidebar funzionante |
+| T3.2 | `AdminSidebar.tsx`: logo Itinera, voci (Dashboard, Pianificazione, Aziende, Rappresentanti, Documenti, Impostazioni), voce attiva evidenziata | Sidebar allineata al design |
 | T3.3 | `Topbar.tsx` (condivisa): titolo pagina, `NotificationBadge`, `UserMenu` (avatar + logout)                     | Topbar funzionante  |
-| T3.4 | `RepLayout.tsx`: Topbar + Outlet; su mobile bottom navigation (Calendario, Appuntamenti, Profilo)              | Layout rep          |
+| T3.4 | `RepLayout.tsx`: Topbar + Outlet; mobile bottom nav (Dashboard, Calendario, Profilo); da `md` sidebar (Dashboard, Pianificazione, Aziende, Documenti, Impostazioni) | Layout rep |
 | T3.5 | `UserMenu.tsx`: MUI Menu con nome utente, voce "Profilo", voce "Logout"                                        | Menu utente         |
 | T3.6 | `NotificationBadge.tsx`: `IconButton` campanella + `Badge` con count notifiche non lette                       | Badge interattivo   |
 
@@ -597,7 +690,7 @@ supabase/
 | T4.1 | `api/companies.ts`: `getAll()`, `getById()`, `create()`, `update()`, `softDelete()` (setta `is_active=false`)                    | Layer API         |
 | T4.2 | `useCompanies.ts`: TanStack Query hooks (`useCompaniesQuery`, `useCreateCompanyMutation`, ecc.)                                  | Hook dati         |
 | T4.3 | `CompaniesPage.tsx`: MUI `DataGrid` (o `Table`) con ricerca per nome/città, pulsante "Aggiungi"                                  | Lista aziende     |
-| T4.4 | `CompanyForm.tsx`: MUI `Dialog` con campi nome\*, indirizzo, città, provincia, referente, telefono, email, note; validazione Zod | Form azienda      |
+| T4.4 | `CompanyForm.tsx`: campi nome\*, indirizzo, città, provincia, CAP, segmento, referente, titolo referente, telefono, email, note; validazione Zod | Form azienda |
 | T4.5 | `CompanyDetailPage.tsx`: card info azienda + tab "Appuntamenti" con storico                                                      | Dettaglio azienda |
 
 ---
@@ -613,20 +706,21 @@ supabase/
 | T5.5 | Al salvataggio `create()`: INSERT appointment + INSERT notification (tipo `appointment_created`) per il rep                                | Notifica automatica |
 | T5.6 | `CalendarPage.tsx`: `CalendarView` con tutti gli appuntamenti, colore per stato, click evento → Drawer dettaglio                           | Calendario admin    |
 | T5.7 | `AppointmentDetailPage.tsx` (admin): card info complete, `AppointmentTimeline`, sezione foglio firma, bottoni modifica/annulla             | Dettaglio admin     |
-| T5.8 | Azione "Modifica": riapre `AppointmentForm` pre-popolato; al salvataggio aggiorna DB + logga in `appointment_modifications` + notifica rep | Edit funzionante    |
+| T5.8 | Azione "Modifica": riapre `AppointmentForm`; se `status='confirmed'` → `status='pending'`; se solo `pending` resta `pending`; logga modifiche data/ora in `appointment_modifications`; INSERT `appointment_updated` | Edit coerente con macchina stati |
 | T5.9 | Azione "Annulla": `ConfirmDialog` → UPDATE `status='cancelled'` + INSERT notification `appointment_cancelled`                              | Annullamento        |
 
 ---
 
-### FASE 6 – Dashboard Rappresentante
+### FASE 6 – Area Rappresentante (dashboard, calendario, rubrica)
 
 | ID   | Task                                                                                                                               | Output atteso          |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| T6.1 | `RepDashboardPage.tsx`: card "Prossimo appuntamento" (se presente), lista appuntamenti questa settimana, count notifiche non lette | Dashboard rep          |
-| T6.2 | `RepCalendarPage.tsx`: `CalendarView` filtrato `representative_id = currentUser.id`, colori per stato                              | Calendario rep         |
-| T6.3 | `RepAppointmentsPage.tsx`: lista con filtro stato (chips cliccabili), ordinata per data                                            | Lista appuntamenti rep |
-| T6.4 | `RepAppointmentDetailPage.tsx`: info azienda + data/ora + note UC + timeline + azioni contestuali in base allo stato               | Dettaglio rep          |
-| T6.5 | `RepProfilePage.tsx`: form modifica nome, telefono + upload avatar su Storage `avatars/`                                           | Profilo rep            |
+| T6.1 | `RepDashboardPage.tsx`: card prossima visita, feed aggiornamenti (notifiche recenti), tabella "Settimana in arrivo"                | Dashboard rep          |
+| T6.2 | `RepCalendarPage.tsx`: viste giorno/settimana/mese, mini-calendario, riepilogo stati giornata, timeline (solo `representative_id` corrente) | Pianificazione rep |
+| T6.3 | `RepCompaniesPage.tsx`: griglia/card aziende in sola lettura con ricerca (campi: segmento, referente, indirizzo)                   | Rubrica aziende        |
+| T6.4 | `RepAppointmentDetailPage.tsx`: `VisitInfoCard` (mappa link esterno/indicazioni), note UC, audit trail, azioni per §6            | Dettaglio visita       |
+| T6.5 | `RescheduleAppointmentPage.tsx` + `RescheduleForm.tsx`: data/ora/motivo separati; submit secondo matrice transizioni §6          | Riprogrammazione       |
+| T6.6 | `RepProfilePage.tsx`: first/last name, telefono, avatar (`avatars/`); email read-only; cambio password opzionale                 | Profilo rep            |
 
 ---
 
@@ -635,10 +729,10 @@ supabase/
 | ID   | Task                                                                                                                                                                                  | Output atteso        |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | T7.1 | **Azione "Conferma"** (stato `pending`): bottone → `ConfirmDialog` → UPDATE `status='confirmed'` + INSERT notification `appointment_confirmed`                                        | Conferma funzionante |
-| T7.2 | **Azione "Modifica data/ora"** (stato `pending` o `confirmed`): apre `ModificationForm.tsx`                                                                                           | Form modifica        |
-| T7.3 | `ModificationForm.tsx`: `DateTimePicker` (pre-popolato con data attuale) + campo obbligatorio "Motivo/nota" + validazione Zod                                                         | Form pronto          |
-| T7.4 | Al submit `ModificationForm`: UPDATE `appointments.scheduled_datetime` + `status='confirmed'` + INSERT `appointment_modifications` (log) + INSERT notification `appointment_modified` | Modifica completa    |
-| T7.5 | **Azione "Carica foglio firma"** (solo se `status='confirmed'`): apre dialog con `FileUploadZone`                                                                                     | Upload accessibile   |
+| T7.2 | **Azione "Modifica data/ora"** (`pending` o `confirmed`): naviga a `RescheduleAppointmentPage`                                                                                          | Flusso modifica      |
+| T7.3 | `RescheduleForm.tsx`: `DatePicker` + `TimePicker` separati + motivo obbligatorio (Zod)                                                                                                | Form allineato mockup |
+| T7.4 | Submit reschedule: UPDATE `scheduled_datetime` (+ `end_datetime` se usato) + `status='confirmed'` + log `appointment_modifications` + notifica `appointment_modified` (o `appointment_confirmed` se era solo conferma senza cambio data da pagina dettaglio) | Modifica completa |
+| T7.5 | **Carica foglio firma** solo se `status='confirmed'`: dialog o redirect da `RepDocumentsPage` con `appointment_id` preselezionato                                                     | Upload gated by stato |
 | T7.6 | `FileUploadZone.tsx`: `react-dropzone` per drag&drop / click, accetta JPEG/PNG/WEBP/PDF ≤10MB, anteprima thumbnail + progress bar                                                     | Componente upload    |
 | T7.7 | Upload foglio firma: Storage upload → INSERT `signed_sheets` → UPDATE `status='completed'` → INSERT notification `signed_sheet_uploaded`                                              | Upload end-to-end    |
 
@@ -657,10 +751,12 @@ supabase/
 
 ---
 
-### FASE 9 – Sezione Foglio Firma (Admin)
+### FASE 9 – Documenti e Fogli Firma
 
 | ID   | Task                                                                                                                    | Output atteso            |
 | ---- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| T9.0 | `RepDocumentsPage.tsx`: upload zone, riepilogo stati derivati (§7.4), lista `signed_sheets` del rep con download        | Hub documenti rep        |
+| T9.0b | `DocumentsPortalPage.tsx` (admin): KPI, tabella globale fogli firma, filtri, link ad appuntamento/azienda              | Portale documenti UC   |
 | T9.1 | In `AppointmentDetailPage` admin: sezione condizionale se `status='completed'` o foglio caricato                        | Sezione visibile         |
 | T9.2 | `api/signedSheets.ts`: `getByAppointmentId()`, `getSignedUrl()` (Supabase Storage signed URL, TTL 1h), `markAsViewed()` | Layer API                |
 | T9.3 | Preview documento: thumbnail se immagine, icona PDF se PDF; pulsante "Apri" (nuova tab con signed URL) e "Scarica"      | Preview + download       |
@@ -692,6 +788,8 @@ supabase/
 | T11.6 | `AppointmentTimeline.tsx`: MUI `Timeline` con tutti gli eventi dell'appuntamento (creazione, modifiche, conferma, upload foglio)          | Storico visivo      |
 | T11.7 | Responsive layout: breakpoint `xs/sm` per mobile rep (bottom nav), `md+` per admin sidebar                                                | Mobile-friendly     |
 | T11.8 | Error boundaries React + pagine `/404` e `/error` con link "Torna alla home"                                                              | Gestione errori     |
+| T11.9 | `AdminSettingsPage.tsx`: sezione inviti rep + toggle notifiche (§7.5); placeholder per riepilogo email giornaliero                        | Impostazioni admin  |
+| T11.10 | Utility `generateReferenceCode()`: formato `VIS-{id corto}` su create appointment                                                      | Codice visita in UI |
 
 ---
 
@@ -733,10 +831,13 @@ export type NotificationType =
 
 export interface Profile {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   role: UserRole;
+  job_title: string | null;
   phone: string | null;
   avatar_url: string | null;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -746,7 +847,10 @@ export interface Company {
   address: string | null;
   city: string | null;
   province: string | null;
+  postal_code: string | null;
+  segment: string | null;
   contact_person: string | null;
+  contact_title: string | null;
   phone: string | null;
   email: string | null;
   notes: string | null;
@@ -758,7 +862,9 @@ export interface Appointment {
   company_id: string;
   representative_id: string;
   scheduled_datetime: string; // ISO 8601
+  end_datetime: string | null;
   original_datetime: string;
+  reference_code: string | null;
   status: AppointmentStatus;
   notes: string | null;
   internal_notes: string | null;
@@ -801,6 +907,11 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
 }
+
+// Helper
+export function getDisplayName(p: Pick<Profile, "first_name" | "last_name">): string {
+  return `${p.first_name} ${p.last_name}`.trim();
+}
 ```
 
 ---
@@ -829,4 +940,4 @@ Requisiti specifici:
 
 ---
 
-_Itinera – Specifiche v3 · Aggiornato con: 3 rappresentanti, gestione account rep, RLS fix, selector e filtro rappresentante_
+_Itinera – Specifiche v3 · Allineato a `.agents/design` (navigazione, schermate rep/admin, token UI). Correzioni logica: RLS rep su stati terminali, transizioni UC pending/confirmed, upload foglio solo da `confirmed`, stati documento derivati, profilo/aziende estesi._
