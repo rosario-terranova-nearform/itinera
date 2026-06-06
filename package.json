@@ -9,7 +9,16 @@
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{ts,js,json}\"",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "supabase:studio": "supabase studio",
+    "db:reset": "supabase db reset --local",
+    "db:push": "supabase db push",
+    "db:query": "supabase db query",
+    "db:diff": "supabase db diff",
+    "db:pull": "supabase db pull"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

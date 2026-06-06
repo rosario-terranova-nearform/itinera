@@ -86,7 +86,7 @@ CREATE TABLE appointments (
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE appointments IS 'Appuntamenti di visita pianificati dall\'UC';
+COMMENT ON TABLE appointments IS 'Appuntamenti di visita pianificati dall''UC';
 
 -- Log modifiche a data/ora (storico negoziazione)
 CREATE TABLE appointment_modifications (
