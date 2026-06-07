@@ -28,14 +28,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (!record.is_active) {
         pb.authStore.clear()
         set({
-          authModel: null,
           isLoading: false,
           error: "Account disattivato. Contatta l'amministratore.",
         })
         return
       }
 
-      set({ authModel: record as unknown as UserRecord, isLoading: false, error: null })
+      set({ isLoading: false, error: null })
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Errore durante il login.'

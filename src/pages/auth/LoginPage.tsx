@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { useNavigate, Link as RouterLink } from 'react-router-dom'
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -16,16 +16,17 @@ import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login, isLoading, error, clearError, authModel } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
-    if (authModel) {
+    if (authModel && location.pathname === '/login') {
       navigate(authModel.role === 'admin' ? '/admin' : '/rep', { replace: true })
     }
-  }, [authModel, navigate])
+  }, [authModel, navigate, location.pathname])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
