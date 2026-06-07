@@ -650,8 +650,6 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 | T1.3 | Configurazione Storage bucket `signed-sheets` con policy (via SQL o dashboard)                                   | Bucket pronto              |
 | T1.4 | `supabase gen types typescript --project-id <id> > src/lib/database.types.ts`                                    | Tipi TypeScript aggiornati |
 | T1.5 | Migration `003_seed.sql`: 1 admin, 3 rappresentanti, 5 aziende, 8 appuntamenti in vari stati                     | Dati di sviluppo           |
-| T1.6 | Edge Function `send-notification-email/index.ts`: riceve payload notifica, compone HTML email, chiama Resend API | Email funzionanti          |
-| T1.7 | Database Webhook in Supabase: su INSERT in `notifications` → chiama Edge Function                                | Trigger automatico         |
 
 ---
 
