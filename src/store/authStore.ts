@@ -1,89 +1,54 @@
 import { create } from 'zustand'
-import { supabase } from '@/lib/supabase'
-import type { Profile } from '@/types'
-import type { Session } from '@supabase/supabase-js'
+import pb from '@/lib/pocketbase'
+import type { UserRecord } from '@/types'
 
 interface AuthState {
-  session: Session | null
-  profile: Profile | null
+  authModel: UserRecord | null
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
-  loadProfile: () => Promise<void>
   clearError: () => void
-  setSession: (session: Session | null) => void
-  setProfile: (profile: Profile | null) => void
+  setModel: (model: UserRecord | null) => void
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  session: null,
-  profile: null,
+export const useAuthStore = create<AuthState>((set) => ({
+  authModel: pb.authStore.model as UserRecord | null,
   isLoading: true,
   error: null,
 
   login: async (email, password) => {
     set({ isLoading: true, error: null })
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (error) {
-      set({ isLoading: false, error: error.message })
-      return
-    }
-
-    set({ session: data.session })
-
-    await get().loadProfile()
-  },
-
-  logout: async () => {
-    set({ isLoading: true })
-    await supabase.auth.signOut()
-    set({ session: null, profile: null, isLoading: false, error: null })
-  },
-
-  loadProfile: async () => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const { record } = await pb
+        .collection('users')
+        .authWithPassword(email, password)
 
-      if (!session) {
-        set({ profile: null, isLoading: false })
-        return
-      }
-
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single()
-
-      if (error) {
-        set({ error: error.message, isLoading: false })
-        return
-      }
-
-      if (!profile.is_active) {
-        await supabase.auth.signOut()
+      if (!record.get('is_active')) {
+        pb.authStore.clear()
         set({
-          session: null,
-          profile: null,
+          authModel: null,
           isLoading: false,
           error: "Account disattivato. Contatta l'amministratore.",
         })
         return
       }
 
-      set({ profile, isLoading: false, error: null })
-    } catch {
-      set({ isLoading: false, error: 'Errore durante il caricamento del profilo.' })
+      set({ authModel: record as unknown as UserRecord, isLoading: false, error: null })
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Errore durante il login.'
+      set({ isLoading: false, error: message })
     }
+  },
+
+  logout: async () => {
+    pb.authStore.clear()
+    set({ authModel: null, isLoading: false, error: null })
   },
 
   clearError: () => set({ error: null }),
 
-  setSession: (session) => set({ session }),
-  setProfile: (profile) => set({ profile }),
+  setModel: (model) => set({ authModel: model }),
 }))

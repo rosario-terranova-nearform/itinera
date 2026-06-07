@@ -1,33 +1,23 @@
 import { useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import pb from '@/lib/pocketbase'
 import { useAuthStore } from '@/store/authStore'
+import type { UserRecord } from '@/types'
 
 export function useAuth() {
   const store = useAuthStore()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      useAuthStore.getState().setSession(session)
-      if (session) {
-        useAuthStore.getState().loadProfile()
-      } else {
-        useAuthStore.setState({ isLoading: false })
-      }
+    const model = pb.authStore.model as UserRecord | null
+    useAuthStore.getState().setModel(model)
+    useAuthStore.setState({ isLoading: false })
+
+    const unsubscribe = pb.authStore.onChange((_token, model) => {
+      useAuthStore.getState().setModel(model as UserRecord | null)
     })
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      useAuthStore.getState().setSession(session)
-      if (session) {
-        useAuthStore.getState().loadProfile()
-      } else {
-        useAuthStore.getState().setProfile(null)
-        useAuthStore.setState({ isLoading: false })
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    return () => {
+      unsubscribe()
+    }
   }, [])
 
   return store

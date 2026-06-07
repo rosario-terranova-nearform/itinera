@@ -16,16 +16,16 @@ import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login, isLoading, error, clearError, profile, session } = useAuth()
+  const { login, isLoading, error, clearError, authModel } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
-    if (session && profile) {
-      navigate(profile.role === 'admin' ? '/admin' : '/rep', { replace: true })
+    if (authModel) {
+      navigate(authModel.role === 'admin' ? '/admin' : '/rep', { replace: true })
     }
-  }, [session, profile, navigate])
+  }, [authModel, navigate])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -58,11 +58,7 @@ export default function LoginPage() {
             Itinera
           </Typography>
 
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ textAlign: 'center', mb: 3 }}
-          >
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mb: 3 }}>
             Gestione appuntamenti rappresentanti
           </Typography>
 
@@ -114,23 +110,12 @@ export default function LoginPage() {
             />
 
             <Box sx={{ textAlign: 'right', mb: 3 }}>
-              <Link
-                component={RouterLink}
-                to="/reset-password"
-                variant="body2"
-                underline="hover"
-              >
+              <Link component={RouterLink} to="/reset-password" variant="body2" underline="hover">
                 Password dimenticata?
               </Link>
             </Box>
 
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              size="large"
-              disabled={isLoading}
-            >
+            <Button type="submit" variant="contained" fullWidth size="large" disabled={isLoading}>
               {isLoading ? <CircularProgress size={22} color="inherit" /> : 'Accedi'}
             </Button>
           </Box>
