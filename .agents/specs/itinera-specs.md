@@ -1,16 +1,16 @@
 # Itinera – Specifiche di Progetto (v4)
 
-> **Stack**: React · TypeScript · Vite · Material UI · PocketBase (DB, Auth, Storage, Realtime, Hooks)
+> **Stack**: React · TypeScript · Vite · Material UI · PocketBase (DB, Auth, Storage, Hooks)
 >
 > **Design di riferimento**: `.agents/design/DESIGN.md` (token colore, tipografia Inter, layout admin/rep). Mockup per schermata in `.agents/design/admin-uc/` e `.agents/design/user-represenative/`.
 >
-> **Assunzioni consolidate**: 3 rappresentanti · admin singolo · modifica appuntamento libera (senza approvazione UC) · notifiche in-app + email · foglio firma come file caricato (foto/PDF) · anagrafica aziende in sola lettura per il rep
+> **Assunzioni consolidate**: 3 rappresentanti · admin singolo · modifica appuntamento libera (senza approvazione UC) · notifiche via email · foglio firma come file caricato (foto/PDF) · anagrafica aziende in sola lettura per il rep
 
 ---
 
 ## 1. Panoramica
 
-**Itinera** è una SPA per la gestione degli appuntamenti di un rappresentante di cancelleria. L'**Unità Centrale (UC)** pianifica le visite aziendali creando incarichi con data e orario. Il **Rappresentante** riceve notifiche, gestisce il proprio calendario, può confermare o modificare liberamente data/orario, e al termine di ogni visita carica il foglio firma come prova.
+**Itinera** è una SPA per la gestione degli appuntamenti di un rappresentante di cancelleria. L'**Unità Centrale (UC)** pianifica le visite aziendali creando incarichi con data e orario. Il **Rappresentante** gestisce il proprio calendario, può confermare o modificare liberamente data/orario, e al termine di ogni visita carica il foglio firma come prova.
 
 ---
 
@@ -31,12 +31,12 @@ Tutti gli account sono **pre-creati** (nessuna registrazione pubblica). L'UC cre
 
 | ID  | Come UC voglio…                                                                            | Così che…                                                         |
 | --- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| A01 | Creare un nuovo appuntamento (azienda, data, ora, note) per un determinato rappresentante  | Il rappresentante sia avvisato subito via notifica in-app e email |
+| A01 | Creare un nuovo appuntamento (azienda, data, ora, note) per un determinato rappresentante  | Il rappresentante sia avvisato subito via email |
 | A02 | Modificare un appuntamento già creato                                                      | Posso correggere data, ora o azienda in qualsiasi momento         |
 | A03 | Annullare un appuntamento                                                                  | Il rep sia avvisato e l'agenda si aggiorni                        |
 | A04 | Vedere il calendario con tutti gli appuntamenti (mensile/settimanale/giornaliero)          | Ho una visione completa dell'agenda                               |
 | A05 | Filtrare appuntamenti per stato e periodo                                                  | Trovo rapidamente ciò che mi serve                                |
-| A06 | Ricevere notifica (in-app + email) quando il rep conferma o modifica un appuntamento       | Resto sempre aggiornato sullo stato dell'agenda                   |
+| A06 | Ricevere email quando il rep conferma o modifica un appuntamento                           | Resto sempre aggiornato sullo stato dell'agenda                   |
 | A07 | Visualizzare e scaricare il foglio firma caricato dal rep                                  | Ho prova documentale delle visite avvenute                        |
 | A08 | Gestire l'anagrafica delle aziende clienti (CRUD)                                          | Posso selezionarle rapidamente alla creazione degli appuntamenti  |
 | A09 | Creare account rappresentanti (con email di benvenuto e link reset password)               | Controllo chi può accedere all'app                                |
@@ -47,11 +47,11 @@ Tutti gli account sono **pre-creati** (nessuna registrazione pubblica). L'UC cre
 
 | ID  | Come Rappresentante voglio…                                                              | Così che…                                                  |
 | --- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| R01 | Ricevere notifica (in-app + email) quando mi viene assegnato un nuovo appuntamento       | Non perda nessun incarico                                  |
+| R01 | Ricevere email quando mi viene assegnato un nuovo appuntamento                           | Non perda nessun incarico                                  |
 | R02 | Vedere il mio calendario con tutti gli appuntamenti (non vedo appuntamenti di altri rep) | Pianifichi le mie giornate                                 |
 | R03 | Confermare un appuntamento così com'è                                                    | L'UC sappia che andrò alla data prevista                   |
 | R04 | Modificare liberamente data e/o ora di un appuntamento con una nota                      | Gestisca eventuali impedimenti senza iter di approvazione  |
-| R05 | Ricevere notifica se l'UC modifica o annulla un appuntamento                             | Sia sempre sincronizzato sulle ultime decisioni            |
+| R05 | Ricevere email se l'UC modifica o annulla un appuntamento                                 | Sia sempre sincronizzato sulle ultime decisioni            |
 | R06 | Caricare il foglio firma dopo una visita (foto o PDF)                                    | Invio prova all'UC dall'app                                |
 | R07 | Vedere il dettaglio di ogni appuntamento (azienda, indirizzo, note UC)                   | Arrivi preparato alla visita                               |
 | R08 | Modificare il mio profilo (nome, cognome, telefono, avatar; email in sola lettura)       | Mantenga i dati aggiornati                                 |
@@ -71,39 +71,22 @@ Tutti gli account sono **pre-creati** (nessuna registrazione pubblica). L'UC cre
 │   FullCalendar · React Hook Form + Zod · dayjs                   │
 │   react-dropzone · react-toastify                                │
 └────────────────────────────┬─────────────────────────────────────┘
-                             │ HTTPS / SSE (Realtime)
+                              │ HTTPS
 ┌────────────────────────────▼─────────────────────────────────────┐
 │                         POCKETBASE                               │
 │                                                                  │
-│  ┌──────────┐  ┌────────────────┐  ┌──────────┐  ┌──────────┐   │
-│  │   Auth   │  │    SQLite      │  │ Storage  │  │Realtime  │   │
-│  │ (JWT)    │  │  + Collections │  │ (files)  │  │ (SSE)    │   │
-│  └──────────┘  └────────────────┘  └──────────┘  └──────────┘   │
+│  ┌──────────┐  ┌────────────────┐  ┌──────────┐                  │
+│  │   Auth   │  │    SQLite      │  │ Storage  │                  │
+│  │ (JWT)    │  │  + Collections │  │ (files)  │                  │
+│  └──────────┘  └────────────────┘  └──────────┘                  │
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │  JS Hooks: pb_hooks/                                       │  │
-│  │  • auth.pb.js       → blocca login se is_active=false      │  │
-│  │  • notifications.pb.js → afterCreate su `notifications`    │  │
-│  │                          → SMTP builtin PocketBase         │  │
+│  │  • auth.pb.js           → blocca login se is_active=false  │  │
+│  │  • notifications.pb.js  → SMTP builtin PocketBase          │  │
 │  └────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────┘
 ```
-
-**Differenze architetturali chiave rispetto a v3 (Supabase)**:
-
-| Aspetto | v3 – Supabase | v4 – PocketBase |
-| ------- | ------------- | --------------- |
-| Deployment backend | SaaS gestito (supabase.com) | Binario Go self-hosted (`./pocketbase serve`) |
-| Database | PostgreSQL | SQLite (incorporato) |
-| Schema | SQL DDL + migration `.sql` | Collections definite via migration `.js` |
-| Controllo accessi | Row Level Security (SQL policy) | Access Rules per collection (filter expression) |
-| Storage | Bucket separati | Campi `file` direttamente sulla collection |
-| Realtime | WebSocket (Supabase Channels) | Server-Sent Events (SSE) |
-| Logica server-side | Edge Functions (Deno) | JS Hooks in `pb_hooks/` (JSVM integrato) |
-| Email | Supabase Webhook → Resend API | SMTP configurato in PocketBase admin |
-| Tipi TypeScript | `supabase gen types` | `pocketbase-typegen` |
-| Client npm | `@supabase/supabase-js` | `pocketbase` |
-| Admin UI | dashboard.supabase.com | `http://localhost:8090/_/` |
 
 ### Dipendenze Frontend
 
@@ -324,7 +307,7 @@ PocketBase crea automaticamente indici sulle relation fields. Aggiungere tramite
 ```
 appointments       → status             (filtro per stato)
 appointments       → scheduled_datetime (ordinamento/range date)
-notifications      → user + is_read     (conteggio non letti per utente)
+notifications      → user + is_read     (audit email e filtri admin)
 ```
 
 ### 5.4 File Storage
@@ -352,8 +335,6 @@ const url = pb.files.getUrl(record, record.file, { token: fileToken });
 // → aggiunge ?token={fileToken} alla URL
 ```
 
-> Equivalente ai "Signed URL" di Supabase Storage, ma con meccanismo token invece di URL pre-firmata.
-
 ---
 
 ## 6. Macchina a Stati degli Appuntamenti
@@ -375,7 +356,7 @@ const url = pb.files.getUrl(record, record.file, { token: fileToken });
 
 ```
                     ┌──────────┐
-         UC crea    │          │  Notifica → Rep (in-app + email)
+         UC crea    │          │  Notifica → Rep (email)
         ──────────► │ PENDING  │
                     │          │
                     └────┬─────┘
@@ -387,14 +368,14 @@ const url = pb.files.getUrl(record, record.file, { token: fileToken });
          (data invariata)       data/ora + nota
               │                     │
               └──────────┬──────────┘
-                         │  Notifica → UC (in-app + email)
+                         │  Notifica → UC (email)
                          ▼  [tipo diverso: confirmed vs modified]
                     ┌──────────┐
                     │CONFIRMED │◄──── UC modifica (da confirmed) → PENDING
                     │          │      UC modifica (da pending) → resta PENDING
                     └────┬─────┘      (sempre notifica → Rep)
                          │ Rep carica foglio firma
-                         │ Notifica → UC (in-app + email)
+                         │ Notifica → UC (email)
                          ▼
                     ┌──────────┐
                     │COMPLETED │  (stato finale, non modificabile)
@@ -444,12 +425,12 @@ const url = pb.files.getUrl(record, record.file, { token: fileToken });
 
 | Evento                   | Notifica a | Tipo                    | Canali         |
 | ------------------------ | ---------- | ----------------------- | -------------- |
-| UC crea appuntamento     | Rep        | `appointment_created`   | in-app + email |
-| UC modifica appuntamento | Rep        | `appointment_updated`   | in-app + email |
-| UC annulla appuntamento  | Rep        | `appointment_cancelled` | in-app + email |
-| Rep conferma (invariato) | UC         | `appointment_confirmed` | in-app + email |
-| Rep modifica data/ora    | UC         | `appointment_modified`  | in-app + email |
-| Rep carica foglio firma  | UC         | `signed_sheet_uploaded` | in-app + email |
+| UC crea appuntamento     | Rep        | `appointment_created`   | email |
+| UC modifica appuntamento | Rep        | `appointment_updated`   | email |
+| UC annulla appuntamento  | Rep        | `appointment_cancelled` | email |
+| Rep conferma (invariato) | UC         | `appointment_confirmed` | email |
+| Rep modifica data/ora    | UC         | `appointment_modified`  | email |
+| Rep carica foglio firma  | UC         | `signed_sheet_uploaded` | email |
 
 ### 7.2 Architettura notifiche
 
@@ -459,16 +440,10 @@ Azione utente nel frontend
         ▼
 Mutation TanStack Query → PocketBase REST API (PATCH/POST)
         │
-        ├──► POST /api/collections/notifications/records
-        │    (inserisce notifica in-app)
-        │              │
-        │              ▼
-        │    PocketBase Realtime SSE
-        │    pb.collection('notifications').subscribe()
-        │    Zustand store update
-        │    Badge count aggiornato in tempo reale
-        │
-        └──► pb_hooks/notifications.pb.js (onRecordAfterCreateSuccess)
+        └──► POST /api/collections/notifications/records
+             │
+             ▼
+        pb_hooks/notifications.pb.js (onRecordAfterCreateSuccess)
                   │
                   ▼
              Legge dati appointment + user destinatario
@@ -478,6 +453,8 @@ Mutation TanStack Query → PocketBase REST API (PATCH/POST)
 ```
 
 **Differenza chiave rispetto a v3**: nessun Database Webhook esterno né Resend API. Il hook JS gira in-process nel server PocketBase e usa lo SMTP configurato in `Settings → Mail settings` dell'admin UI. Qualsiasi provider SMTP compatibile funziona (Resend SMTP, Mailgun, SendGrid, Gmail SMTP, ecc.).
+
+La collezione `notifications` funge da audit log delle email inviate; non viene letta dal frontend.
 
 ### 7.3 Template email (hook SMTP)
 
@@ -541,7 +518,7 @@ onRecordAuthWithPasswordRequest((e) => {
 
 ### 7.7 Impostazioni notifiche (admin)
 
-Schermata impostazioni: toggle per avvisi immediati su nuovo appuntamento e upload documento. **Fuori MVP**: email riepilogo giornaliero alle 08:00 (solo documentato, non implementato).
+Schermata impostazioni per configurare il mittente delle email e abilitare/disabilitare l'invio automatico. **Fuori MVP**: email riepilogo giornaliero alle 08:00 (solo documentato, non implementato).
 
 ---
 
@@ -552,7 +529,6 @@ src/
 ├── api/                        # Tutte le chiamate PocketBase (no logica UI)
 │   ├── appointments.ts
 │   ├── companies.ts
-│   ├── notifications.ts
 │   ├── users.ts                # era profiles.ts in v3
 │   └── signedSheets.ts
 │
@@ -575,11 +551,7 @@ src/
 │   │   └── DocumentStatusSummary.tsx
 │   ├── calendar/
 │   │   └── CalendarView.tsx
-│   ├── notifications/
-│   │   ├── NotificationCenter.tsx
-│   │   ├── NotificationItem.tsx
-│   │   └── NotificationBadge.tsx
-│   └── layout/
+│       └── layout/
 │       ├── AdminLayout.tsx
 │       ├── RepLayout.tsx
 │       ├── AdminSidebar.tsx
@@ -587,10 +559,8 @@ src/
 │
 ├── hooks/
 │   ├── useAuth.ts
-│   ├── useNotifications.ts
 │   ├── useAppointments.ts
-│   ├── useCompanies.ts
-│   └── useRealtimeNotifications.ts
+│   └── useCompanies.ts
 │
 ├── pages/
 │   ├── auth/
@@ -617,8 +587,7 @@ src/
 │       └── RepProfilePage.tsx
 │
 ├── store/
-│   ├── authStore.ts
-│   └── notificationStore.ts
+│   └── authStore.ts
 │
 ├── lib/
 │   ├── pocketbase.ts           # singleton PocketBase tipizzato
@@ -705,7 +674,7 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 | ID   | Task                                                                                                                          | Output atteso              |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
 | T0.1 | `npm create vite@latest itinera -- --template react-ts`                                                                       | Progetto base funzionante  |
-| T0.2 | Installare dipendenze frontend (vedi §4); usare `pocketbase` al posto di `@supabase/supabase-js`                              | `package.json` completo    |
+| T0.2 | Installare dipendenze frontend (vedi §4)                                                                                      | `package.json` completo    |
 | T0.3 | Configurare ESLint + Prettier + path alias `@/` in `vite.config.ts` e `tsconfig.json`                                        | Import puliti con `@/`     |
 | T0.4 | Scaricare il binario PocketBase da `pocketbase.io`; eseguire `./pocketbase serve`; aprire admin UI `http://127.0.0.1:8090/_/`; impostare email e password del superadmin | PocketBase locale attivo |
 | T0.5 | Creare `.env` con `VITE_PB_URL=http://127.0.0.1:8090` + committare `.env.example`                                            | Config env                 |
@@ -749,10 +718,10 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 | ---- | ------------------------------------------------------------------------------------------------------------------ | ------------------- |
 | T3.1 | `AdminLayout.tsx`: Drawer laterale persistente (240px) + `<Outlet />`                                              | Layout admin        |
 | T3.2 | `AdminSidebar.tsx`: logo Itinera, voci nav (Dashboard, Pianificazione, Aziende, Rappresentanti, Documenti, Impostazioni), voce attiva evidenziata | Sidebar allineata al design |
-| T3.3 | `Topbar.tsx` (condivisa): titolo pagina, `NotificationBadge`, `UserMenu` (avatar via `pb.files.getUrl()` + logout) | Topbar funzionante  |
+| T3.3 | `Topbar.tsx` (condivisa): titolo pagina, `UserMenu` (avatar via `pb.files.getUrl()` + logout) | Topbar funzionante  |
 | T3.4 | `RepLayout.tsx`: Topbar + Outlet; mobile bottom nav (Dashboard, Calendario, Profilo); da `md` sidebar             | Layout rep          |
 | T3.5 | `UserMenu.tsx`: nome utente, voce "Profilo", voce "Logout" che chiama `pb.authStore.clear()` + redirect           | Menu utente         |
-| T3.6 | `NotificationBadge.tsx`: count non lette da store, click → `NotificationCenter` Drawer                            | Badge interattivo   |
+
 
 ---
 
@@ -788,7 +757,7 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID   | Task                                                                                                                                     | Output atteso          |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| T6.1 | `RepDashboardPage.tsx`: card prossima visita, feed aggiornamenti (notifiche recenti), tabella "Settimana in arrivo"                      | Dashboard rep          |
+| T6.1 | `RepDashboardPage.tsx`: card prossima visita, tabella "Settimana in arrivo"                      | Dashboard rep          |
 | T6.2 | `RepCalendarPage.tsx`: viste giorno/settimana/mese; query filtrata `?filter=representative="${currentUser.id}"`; mini-calendario; riepilogo stati | Pianificazione rep |
 | T6.3 | `RepCompaniesPage.tsx`: griglia/card aziende sola lettura con ricerca (segmento, referente, indirizzo)                                   | Rubrica aziende        |
 | T6.4 | `RepAppointmentDetailPage.tsx`: `VisitInfoCard`, note UC (esclusa da query con `fields`), audit trail, azioni per stato                  | Dettaglio visita       |
@@ -810,17 +779,6 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 | T7.7 | Upload: costruire `FormData` con `file`, `file_name`, `file_size`, `mime_type`, `appointment`, `uploaded_by` → `pb.collection('signed_sheets').create(formData)` → PATCH `status='completed'` → POST notification `signed_sheet_uploaded` | Upload end-to-end |
 
 ---
-
-### FASE 8 – Sistema Notifiche
-
-| ID   | Task                                                                                                                                     | Output atteso        |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| T8.1 | `api/notifications.ts`: `getAll()`, `markAsRead(id)`, `markAllAsRead()`, `getUnreadCount()` via `pb.collection('notifications')`         | Layer API            |
-| T8.2 | `notificationStore.ts` (Zustand): `notifications[]`, `unreadCount`, azioni di sync                                                      | Store                |
-| T8.3 | `useRealtimeNotifications.ts`: `pb.collection('notifications').subscribe('*', handler, { filter: \`user="${currentUserId}"\` })` in `useEffect`; `return () => pb.collection('notifications').unsubscribe()` come cleanup | Realtime SSE funzionante |
-| T8.4 | `NotificationBadge.tsx`: count da store, click → apre `NotificationCenter` Drawer                                                       | Badge live           |
-| T8.5 | `NotificationCenter.tsx`: MUI Drawer da destra, lista `NotificationItem`, header "Segna tutte come lette"                               | Centro notifiche     |
-| T8.6 | `NotificationItem.tsx`: icona per tipo, titolo, messaggio, timestamp relativo (`dayjs().from()`), click → naviga al dettaglio + segna letta | Item notifica     |
 
 ---
 
@@ -872,8 +830,8 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 | ----- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
 | T12.1 | Unit test `useAuth` (Vitest + testing-library): mock `pocketbase` client, test login/logout/redirect            | Test auth          |
 | T12.2 | Unit test `AppointmentForm`: validazione Zod, submit, error states                                             | Test form          |
-| T12.3 | Integration test notifiche: mock SSE subscribe (`pb.collection().subscribe`) → verifica badge update            | Test notifiche     |
-| T12.4 | E2E Playwright: flusso admin (login → crea appuntamento → verifica notifica rep)                               | Test E2E           |
+| T12.3 | Integration test notifiche: verifica che POST `notifications` crei il record e inneschi l'hook email            | Test notifiche     |
+| T12.4 | E2E Playwright: flusso admin (login → crea appuntamento → verifica creazione notifica)                               | Test E2E           |
 | T12.5 | E2E Playwright: flusso rep (login → modifica appuntamento → carica foglio firma)                               | Test E2E           |
 | T12.6 | GitHub Actions CI: lint + typecheck + unit test + build frontend                                               | Pipeline CI        |
 | T12.7 | Deploy PocketBase su server (Railway, Fly.io o VPS): montare volume persistente su `pb_data/`; copiare `pb_hooks/` e `pb_migrations/`; eseguire `./pocketbase serve` | Backend produzione |
@@ -1017,67 +975,3 @@ pb.autoCancellation(false);
 
 export default pb;
 ```
-
-### Snippet realtime notifications (`src/hooks/useRealtimeNotifications.ts`)
-
-```typescript
-import { useEffect } from "react";
-import pb from "@/lib/pocketbase";
-import { useAuthStore } from "@/store/authStore";
-import { useNotificationStore } from "@/store/notificationStore";
-
-export function useRealtimeNotifications() {
-  const authModel = useAuthStore((s) => s.authModel);
-  const { addNotification } = useNotificationStore();
-
-  useEffect(() => {
-    if (!authModel?.id) return;
-
-    pb.collection("notifications").subscribe(
-      "*",
-      (e) => {
-        if (e.action === "create") {
-          addNotification(e.record);
-        }
-      },
-      { filter: `user="${authModel.id}"` }
-    );
-
-    return () => {
-      pb.collection("notifications").unsubscribe();
-    };
-  }, [authModel?.id]);
-}
-```
-
----
-
-## 12. Note per l'Uso con LLM
-
-Ogni task può essere eseguito in sessione separata. Template di prompt consigliato:
-
-```
-Contesto: sto costruendo "Itinera", una web app React + TypeScript + Vite +
-Material UI + PocketBase. Le specifiche complete sono nel documento allegato.
-
-Task da completare: [T_X.Y – Titolo task]
-
-Requisiti specifici:
-- Usa MUI (no Tailwind)
-- PocketBase client singleton da `@/lib/pocketbase` (istanza `PocketBase`)
-- Tipi da `@/types/index.ts` (estendono `RecordModel` di PocketBase)
-- TanStack Query per server state
-- Zustand per client state
-- React Hook Form + Zod per form
-- dayjs per date
-- Per realtime usa `pb.collection('...').subscribe()` (SSE, non WebSocket)
-- Per URL file usa `pb.files.getUrl(record, filename)` + `pb.files.getToken()` per file protetti
-- Per relazioni usa il parametro `?expand=campo` nelle query PocketBase
-- Per filtri usa la sintassi PocketBase: `?filter=campo="valore"&&campo2>="data"`
-
-[Incolla le sezioni rilevanti della spec come contesto aggiuntivo]
-```
-
----
-
-_Itinera – Specifiche v4 · Migrazione da Supabase (v3) a PocketBase. Invariate: logica di dominio, macchina a stati, User Stories, viste UI/mockup, componenti frontend. Modificate: stack backend (binario PocketBase self-hosted, SQLite, Collections + Access Rules), autenticazione (`pb.authStore`), storage (file fields sulle collections), realtime (SSE vs WebSocket), email (SMTP hook JS vs Resend Edge Function), tipi TypeScript (RecordModel + expand), struttura backend (`pb_migrations/`, `pb_hooks/`), deploy (server self-hosted + Vercel)._
