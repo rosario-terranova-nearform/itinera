@@ -4,4 +4,5 @@ onRecordAuthWithPasswordRequest((e) => {
   if (!e.record.getBool('is_active')) {
     throw new ApiError(403, "Account disattivato. Contatta l'amministratore.")
   }
+  e.next()
 }, 'users')

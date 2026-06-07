@@ -12,10 +12,10 @@ migrate((app) => {
 
   // ── Admin ────────────────────────────────────────────────────────
   const admin = new Record(usersCol)
-  admin.set('email', 'admin@itinera.test')
-  admin.set('password', 'Password123!')
+  admin.set('email', 'admin@itinera.it')
+  admin.set('password', 'password123')
   admin.set('verified', true)
-  admin.set('first_name', 'Marco')
+  admin.set('first_name', 'Mario')
   admin.set('last_name', 'Rossi')
   admin.set('role', 'admin')
   admin.set('job_title', 'Unità Centrale')
@@ -26,21 +26,21 @@ migrate((app) => {
   const reps = []
   const repData = [
     {
-      email: 'anna.bianchi@itinera.test',
-      first_name: 'Anna',
+      email: 'luca.bianchi@itinera.it',
+      first_name: 'Luca',
       last_name: 'Bianchi',
       job_title: 'Rappresentante commerciale',
     },
     {
-      email: 'luigi.verdi@itinera.test',
-      first_name: 'Luigi',
+      email: 'sara.verdi@itinera.it',
+      first_name: 'Sara',
       last_name: 'Verdi',
       job_title: 'Rappresentante senior',
     },
     {
-      email: 'sara.neri@itinera.test',
-      first_name: 'Sara',
-      last_name: 'Neri',
+      email: 'marco.gialli@itinera.it',
+      first_name: 'Marco',
+      last_name: 'Gialli',
       job_title: 'Rappresentante area nord',
     },
   ]
@@ -48,7 +48,7 @@ migrate((app) => {
   for (const r of repData) {
     const rec = new Record(usersCol)
     rec.set('email', r.email)
-    rec.set('password', 'Password123!')
+    rec.set('password', 'password123')
     rec.set('verified', true)
     rec.set('first_name', r.first_name)
     rec.set('last_name', r.last_name)
@@ -68,63 +68,63 @@ migrate((app) => {
       province: 'MI',
       postal_code: '20121',
       segment: 'Enterprise',
-      contact_person: 'Giuseppe Verdi',
+      contact_person: 'Giuseppe Ferrari',
       contact_title: 'Direttore acquisti',
       phone: '02 1234567',
       email: 'acquisti@cartoleriamilano.it',
       is_active: true,
     },
     {
-      name: 'Ufficio Moderno spa',
+      name: 'Ufficio Moderno SPA',
       address: 'Corso Italia 45',
-      city: 'Torino',
-      province: 'TO',
-      postal_code: '10122',
+      city: 'Roma',
+      province: 'RM',
+      postal_code: '00185',
       segment: 'Mid-Market',
-      contact_person: 'Maria Bianchi',
+      contact_person: 'Anna Conti',
       contact_title: 'Resp. ufficio acquisti',
-      phone: '011 7654321',
-      email: 'mbianchi@ufficiomoderno.it',
+      phone: '06 7654321',
+      email: 'a.conti@ufficiomoderno.it',
       is_active: true,
     },
     {
-      name: 'Cancelleria Amica snc',
+      name: 'Cancelleria Roma SRL',
       address: 'Via Napoli 78',
       city: 'Roma',
       province: 'RM',
       postal_code: '00184',
       segment: 'SMB',
-      contact_person: 'Carlo Rossi',
+      contact_person: 'Paolo Bianco',
       contact_title: 'Titolare',
       phone: '06 9876543',
-      email: 'info@cancelleriaamica.it',
+      email: 'info@cancelleriaroma.it',
       is_active: true,
     },
     {
-      name: 'Paper & Co.',
+      name: 'Paper & Co. SRL',
       address: 'Piazza Dante 3',
       city: 'Bologna',
       province: 'BO',
       postal_code: '40125',
       segment: 'Enterprise',
-      contact_person: 'Elena Ferrari',
+      contact_person: 'Laura Neri',
       contact_title: 'Resp. approvvigionamenti',
       phone: '051 4567890',
-      email: 'e.ferrari@paperco.it',
+      email: 'l.neri@paperco.it',
       is_active: true,
     },
     {
-      name: 'Office World SRL',
+      name: 'Scrivania Express SRL',
       address: 'Via Mazzini 56',
       city: 'Firenze',
       province: 'FI',
       postal_code: '50123',
       segment: 'Mid-Market',
-      contact_person: 'Francesco Esposito',
+      contact_person: 'Marco Sala',
       contact_title: 'Store manager',
       phone: '055 2345678',
-      email: 'f.esposito@officeworld.it',
-      is_active: false,
+      email: 'm.sala@scrivaniaexpress.it',
+      is_active: true,
     },
   ]
 
@@ -150,21 +150,21 @@ migrate((app) => {
   const now = new Date()
 
   const apptData = [
-    { company: companies[0], representative: reps[0], scheduled: 1, status: 'pending' },
-    { company: companies[1], representative: reps[0], scheduled: 2, status: 'confirmed' },
-    { company: companies[2], representative: reps[1], scheduled: 3, status: 'completed' },
-    { company: companies[3], representative: reps[1], scheduled: 5, status: 'cancelled' },
-    { company: companies[0], representative: reps[2], scheduled: 7, status: 'pending' },
-    { company: companies[4], representative: reps[2], scheduled: 10, status: 'confirmed' },
-    { company: companies[1], representative: reps[0], scheduled: 14, status: 'pending' },
-    { company: companies[3], representative: reps[1], scheduled: 21, status: 'confirmed' },
+    { company: companies[0], representative: reps[0], offset: 3, status: 'pending' },
+    { company: companies[1], representative: reps[1], offset: 5, status: 'confirmed' },
+    { company: companies[2], representative: reps[2], offset: -2, status: 'completed' },
+    { company: companies[3], representative: reps[0], offset: -7, status: 'cancelled' },
+    { company: companies[4], representative: reps[1], offset: 7, status: 'pending' },
+    { company: companies[0], representative: reps[2], offset: 10, status: 'confirmed' },
+    { company: companies[1], representative: reps[0], offset: -30, status: 'completed' },
+    { company: companies[3], representative: reps[2], offset: 14, status: 'pending' },
   ]
 
   const apptRecords = []
   for (let i = 0; i < apptData.length; i++) {
     const a = apptData[i]
     const d = new Date(now)
-    d.setDate(d.getDate() + a.scheduled)
+    d.setDate(d.getDate() + a.offset)
     d.setHours(9 + Math.floor(i / 2) * 2, 0, 0, 0)
 
     const end = new Date(d)
@@ -198,7 +198,7 @@ migrate((app) => {
 
   const mod = new Record(modificationsCol)
   mod.set('appointment', modAppt.id)
-  mod.set('modified_by', reps[0].id)
+  mod.set('modified_by', reps[1].id)
   mod.set('old_datetime', origDate.toISOString())
   mod.set('new_datetime', newDate.toISOString())
   mod.set('reason', 'Sovrapposizione con altra visita')
@@ -218,94 +218,94 @@ migrate((app) => {
       message: 'Ti è stato assegnato un nuovo appuntamento per il giorno ...',
     },
     {
-      user: reps[0],
+      user: reps[1],
       appointment: apptRecords[1],
       type: 'appointment_created',
-      title: 'Nuovo incarico – Ufficio Moderno spa',
+      title: 'Nuovo incarico – Ufficio Moderno SPA',
       message: 'Ti è stato assegnato un nuovo appuntamento per il giorno ...',
     },
     {
       user: admin,
       appointment: apptRecords[1],
       type: 'appointment_confirmed',
-      title: 'Appuntamento confermato da Anna Bianchi',
-      message: "Anna Bianchi ha confermato l'appuntamento per il giorno ...",
-    },
-    {
-      user: reps[0],
-      appointment: apptRecords[1],
-      type: 'appointment_modified',
-      title: 'Appuntamento modificato – Ufficio Moderno spa',
-      message: "Hai modificato l'orario dell'appuntamento.",
+      title: 'Appuntamento confermato da Sara Verdi',
+      message: "Sara Verdi ha confermato l'appuntamento per il giorno ...",
     },
     {
       user: reps[1],
+      appointment: apptRecords[1],
+      type: 'appointment_modified',
+      title: 'Appuntamento modificato – Ufficio Moderno SPA',
+      message: "Hai modificato l'orario dell'appuntamento.",
+    },
+    {
+      user: reps[2],
       appointment: apptRecords[2],
       type: 'appointment_created',
-      title: 'Nuovo incarico – Cancelleria Amica snc',
+      title: 'Nuovo incarico – Cancelleria Roma SRL',
       message: 'Ti è stato assegnato un nuovo appuntamento.',
     },
     {
       user: admin,
       appointment: apptRecords[2],
       type: 'signed_sheet_uploaded',
-      title: 'Foglio firma ricevuto – Cancelleria Amica snc',
-      message: 'Luigi Verdi ha caricato il foglio firma.',
+      title: 'Foglio firma ricevuto – Cancelleria Roma SRL',
+      message: 'Marco Gialli ha caricato il foglio firma.',
     },
     {
-      user: reps[1],
+      user: reps[0],
       appointment: apptRecords[3],
       type: 'appointment_cancelled',
-      title: 'Appuntamento annullato – Paper & Co.',
+      title: 'Appuntamento annullato – Paper & Co. SRL',
       message: "L'appuntamento del ... è stato annullato.",
     },
     {
-      user: reps[2],
+      user: reps[1],
       appointment: apptRecords[4],
       type: 'appointment_created',
-      title: 'Nuovo incarico – Cartoleria Milano SRL',
+      title: 'Nuovo incarico – Scrivania Express SRL',
       message: 'Ti è stato assegnato un nuovo appuntamento.',
     },
     {
       user: reps[2],
       appointment: apptRecords[5],
       type: 'appointment_created',
-      title: 'Nuovo incarico – Office World SRL',
+      title: 'Nuovo incarico – Cartoleria Milano SRL',
       message: 'Ti è stato assegnato un nuovo appuntamento.',
     },
     {
       user: admin,
       appointment: apptRecords[5],
       type: 'appointment_confirmed',
-      title: 'Appuntamento confermato da Sara Neri',
-      message: 'Sara Neri ha confermato.',
+      title: 'Appuntamento confermato da Marco Gialli',
+      message: 'Marco Gialli ha confermato.',
     },
     {
       user: reps[0],
       appointment: apptRecords[6],
       type: 'appointment_created',
-      title: 'Nuovo incarico – Ufficio Moderno spa',
+      title: 'Nuovo incarico – Ufficio Moderno SPA',
       message: 'Ti è stato assegnato un nuovo appuntamento.',
     },
     {
       user: admin,
       appointment: apptRecords[6],
       type: 'appointment_updated',
-      title: 'Incarico modificato – Ufficio Moderno spa',
+      title: 'Incarico modificato – Ufficio Moderno SPA',
       message: "L'appuntamento del ... è stato modificato.",
     },
     {
-      user: reps[1],
+      user: reps[2],
       appointment: apptRecords[7],
       type: 'appointment_created',
-      title: 'Nuovo incarico – Paper & Co.',
-      message: 'Ti è stato assegnato un nuovo appuntamento per Paper & Co.',
+      title: 'Nuovo incarico – Paper & Co. SRL',
+      message: 'Ti è stato assegnato un nuovo appuntamento per Paper & Co. SRL',
     },
     {
-      user: reps[1],
+      user: reps[2],
       appointment: apptRecords[7],
       type: 'appointment_confirmed',
-      title: 'Appuntamento confermato – Paper & Co.',
+      title: 'Appuntamento confermato – Paper & Co. SRL',
       message: "Hai confermato l'appuntamento del ...",
     },
   ]
@@ -335,7 +335,7 @@ migrate((app) => {
     const col = app.findCollectionByNameOrId(name)
     const records = app.findRecordsByFilter(col.name || col.id, '1=1', '', 0, 0)
     for (const rec of records) {
-      if (name === 'users' && rec.get('email') === 'admin@itinera.test') continue
+      if (name === 'users' && rec.get('email') === 'admin@itinera.it') continue
       app.delete(rec)
     }
   }

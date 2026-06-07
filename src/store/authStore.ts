@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         .collection('users')
         .authWithPassword(email, password)
 
-      if (!record.get('is_active')) {
+      if (!record.is_active) {
         pb.authStore.clear()
         set({
           authModel: null,

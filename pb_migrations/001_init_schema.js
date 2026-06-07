@@ -261,8 +261,7 @@ migrate((app) => {
     'is_active',
   ]
   for (const name of customFields) {
-    const field = users.fields.getByName(name)
-    if (field) users.fields.remove(field)
+    users.fields.removeByName(name)
   }
   app.save(users)
 })

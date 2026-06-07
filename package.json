@@ -11,6 +11,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{ts,js,json}\"",
     "preview": "vite preview",
     "pb:dev": "./pocketbase serve",
+    "pb:migrate": "./pocketbase migrate up",
+    "pb:migrate:redo": "./pocketbase migrate down 999 && ./pocketbase migrate up",
     "pb:typegen": "npx pocketbase-typegen --url http://127.0.0.1:8090 --out src/lib/pb.types.ts",
     "typecheck": "tsc -b --noEmit"
   },
