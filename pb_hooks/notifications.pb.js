@@ -19,4 +19,6 @@ onRecordAfterCreateSuccess((e) => {
   })
 
   $app.newMailClient().send(message)
+
+  e.next()
 }, 'notifications')

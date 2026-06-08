@@ -23,6 +23,12 @@ migrate((app) => {
   }))
   users.fields.addAt(idx++, new BoolField({ name: 'is_active' }))
 
+  users.listRule = '@request.auth.role = "admin"'
+  users.viewRule = '@request.auth.id = id || @request.auth.role = "admin"'
+  users.createRule = '@request.auth.role = "admin"'
+  users.updateRule = '@request.auth.id = id || @request.auth.role = "admin"'
+  users.deleteRule = '@request.auth.role = "admin"'
+
   app.save(users)
 
   // ── 2. companies ──────────────────────────────────────────────────
@@ -209,6 +215,7 @@ migrate((app) => {
         type: 'relation',
         name: 'appointment',
         collectionId: appointments.id,
+        cascadeDelete: false,
       },
       {
         type: 'select',

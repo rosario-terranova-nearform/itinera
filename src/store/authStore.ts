@@ -1,12 +1,13 @@
 import { create } from 'zustand'
 import pb from '@/lib/pocketbase'
 import type { UserRecord } from '@/types'
+import { getLoginErrorMessage } from '@/utils/authErrors'
 
 interface AuthState {
   authModel: UserRecord | null
   isLoading: boolean
   error: string | null
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<UserRecord | null>
   logout: () => Promise<void>
   clearError: () => void
   setModel: (model: UserRecord | null) => void
@@ -21,24 +22,24 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null })
 
     try {
-      const { record } = await pb
-        .collection('users')
-        .authWithPassword(email, password)
+      const { record } = await pb.collection('users').authWithPassword(email, password)
+      const user = record as UserRecord
 
-      if (!record.is_active) {
+      if (user.is_active === false) {
         pb.authStore.clear()
         set({
+          authModel: null,
           isLoading: false,
           error: "Account disattivato. Contatta l'amministratore.",
         })
-        return
+        return null
       }
 
-      set({ isLoading: false, error: null })
+      set({ authModel: user, isLoading: false, error: null })
+      return user
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Errore durante il login.'
-      set({ isLoading: false, error: message })
+      set({ isLoading: false, error: getLoginErrorMessage(err) })
+      return null
     }
   },
 

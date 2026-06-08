@@ -204,9 +204,11 @@ migrate((app) => {
   mod.set('reason', 'Sovrapposizione con altra visita')
   app.save(mod)
 
-  // ── 2 Signed sheets (for completed appointment) ──────────────────
-  // Skipped — file fields cannot be seeded via migrations
-  //
+  modAppt.set('scheduled_datetime', newDate.toISOString())
+  app.save(modAppt)
+
+  // Signed sheets for completed appointments:
+  // PB_SUPERUSER_EMAIL=… PB_SUPERUSER_PASSWORD=… npm run pb:seed-files
 
   // ── Notifications ────────────────────────────────────────────────
   const notifData = [
@@ -290,9 +292,9 @@ migrate((app) => {
     {
       user: admin,
       appointment: apptRecords[6],
-      type: 'appointment_updated',
-      title: 'Incarico modificato – Ufficio Moderno SPA',
-      message: "L'appuntamento del ... è stato modificato.",
+      type: 'signed_sheet_uploaded',
+      title: 'Foglio firma ricevuto – Ufficio Moderno SPA',
+      message: 'Luca Bianchi ha caricato il foglio firma.',
     },
     {
       user: reps[2],
@@ -300,13 +302,6 @@ migrate((app) => {
       type: 'appointment_created',
       title: 'Nuovo incarico – Paper & Co. SRL',
       message: 'Ti è stato assegnato un nuovo appuntamento per Paper & Co. SRL',
-    },
-    {
-      user: reps[2],
-      appointment: apptRecords[7],
-      type: 'appointment_confirmed',
-      title: 'Appuntamento confermato – Paper & Co. SRL',
-      message: "Hai confermato l'appuntamento del ...",
     },
   ]
 

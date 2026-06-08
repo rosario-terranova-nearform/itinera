@@ -31,7 +31,11 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!email.trim() || !password.trim()) return
-    await login(email.trim(), password)
+
+    const user = await login(email.trim(), password)
+    if (user) {
+      navigate(user.role === 'admin' ? '/admin' : '/rep', { replace: true })
+    }
   }
 
   return (

@@ -36,7 +36,6 @@ Tutti gli account: **`password123`**
 | 8 | pending    | Marco | Paper & Co.          | tra 14 giorni  |
 
 ## Note
-- Le date usano `NOW()` relative, quindi sono sempre aggiornate
-- I completed (3, 7) hanno già un foglio firma caricato
-- Il confirmed #2 ha una modifica data in cronologia (Sara ha posticipato)
-- `supabase/migrations/004_seed.sql` è idempotente (`ON CONFLICT DO NOTHING`)
+- Le date usano offset relativi a `NOW()`, quindi sono sempre aggiornate
+- I completed (#3 `VIS-10002`, #7 `VIS-10006`) hanno fogli firma — eseguire `PB_SUPERUSER_EMAIL=… PB_SUPERUSER_PASSWORD=… npm run pb:seed-files` dopo le migration
+- Il confirmed #2 (`VIS-10001`) ha una modifica data in cronologia (Sara ha posticipato di 2 ore)

@@ -14,6 +14,7 @@
     "pb:migrate": "./pocketbase migrate up",
     "pb:migrate:redo": "./pocketbase migrate down 999 && ./pocketbase migrate up",
     "pb:typegen": "npx pocketbase-typegen --url http://127.0.0.1:8090 --out src/lib/pb.types.ts",
+    "pb:seed-files": "node scripts/seed-signed-sheets.mjs",
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
