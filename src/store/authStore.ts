@@ -8,9 +8,9 @@ interface AuthState {
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<UserRecord | null>
-  logout: () => Promise<void>
+  logout: () => void
+  init: () => () => void
   clearError: () => void
-  setModel: (model: UserRecord | null) => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -43,12 +43,23 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  logout: async () => {
+  logout: () => {
     pb.authStore.clear()
     set({ authModel: null, isLoading: false, error: null })
   },
 
-  clearError: () => set({ error: null }),
+  init: () => {
+    set({
+      authModel: pb.authStore.model as UserRecord | null,
+      isLoading: false,
+    })
 
-  setModel: (model) => set({ authModel: model }),
+    const unsubscribe = pb.authStore.onChange((_token, model) => {
+      set({ authModel: (model as UserRecord) ?? null })
+    })
+
+    return unsubscribe
+  },
+
+  clearError: () => set({ error: null }),
 }))

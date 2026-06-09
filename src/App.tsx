@@ -2,11 +2,13 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from '@/pages/auth/LoginPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import ProtectedRoute from '@/components/common/ProtectedRoute'
+import TempLogoutButton from '@/components/common/TempLogoutButton'
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
 import RepDashboardPage from '@/pages/representative/RepDashboardPage'
 
 export default function App() {
   return (
+    <>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -20,5 +22,7 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
+    <TempLogoutButton />
+    </>
   )
 }
