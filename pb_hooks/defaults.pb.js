@@ -1,15 +1,12 @@
 // pb_hooks/defaults.pb.js — set field defaults on create when not explicitly provided
-
-function getRequestData(httpContext) {
-  try {
-    return $apis.requestInfo(httpContext).data || {}
-  } catch (_) {
-    return {}
-  }
-}
+// Note: logic must be inlined — JSVM handlers cannot call module-level functions.
 
 onRecordCreateRequest((e) => {
-  const data = getRequestData(e.httpContext)
+  let data = {}
+  try {
+    const info = typeof e.requestInfo === 'function' ? e.requestInfo() : e.requestInfo
+    data = info?.body || {}
+  } catch (_) {}
 
   if (!('is_active' in data)) {
     e.record.set('is_active', true)
@@ -22,7 +19,11 @@ onRecordCreateRequest((e) => {
 }, 'users')
 
 onRecordCreateRequest((e) => {
-  const data = getRequestData(e.httpContext)
+  let data = {}
+  try {
+    const info = typeof e.requestInfo === 'function' ? e.requestInfo() : e.requestInfo
+    data = info?.body || {}
+  } catch (_) {}
 
   if (!data.status) {
     e.record.set('status', 'pending')
@@ -32,7 +33,11 @@ onRecordCreateRequest((e) => {
 }, 'appointments')
 
 onRecordCreateRequest((e) => {
-  const data = getRequestData(e.httpContext)
+  let data = {}
+  try {
+    const info = typeof e.requestInfo === 'function' ? e.requestInfo() : e.requestInfo
+    data = info?.body || {}
+  } catch (_) {}
 
   if (!('is_active' in data)) {
     e.record.set('is_active', true)
@@ -42,7 +47,11 @@ onRecordCreateRequest((e) => {
 }, 'companies')
 
 onRecordCreateRequest((e) => {
-  const data = getRequestData(e.httpContext)
+  let data = {}
+  try {
+    const info = typeof e.requestInfo === 'function' ? e.requestInfo() : e.requestInfo
+    data = info?.body || {}
+  } catch (_) {}
 
   if (!('is_read' in data)) {
     e.record.set('is_read', false)
@@ -52,7 +61,11 @@ onRecordCreateRequest((e) => {
 }, 'notifications')
 
 onRecordCreateRequest((e) => {
-  const data = getRequestData(e.httpContext)
+  let data = {}
+  try {
+    const info = typeof e.requestInfo === 'function' ? e.requestInfo() : e.requestInfo
+    data = info?.body || {}
+  } catch (_) {}
 
   if (!('viewed_by_admin' in data)) {
     e.record.set('viewed_by_admin', false)

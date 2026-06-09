@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 
-export function useAuth() {
+export type UseAuthReturn = ReturnType<typeof useAuthStore.getState>
+
+export function useAuth(): UseAuthReturn {
   const store = useAuthStore()
 
   useEffect(() => {

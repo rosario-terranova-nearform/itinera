@@ -1,5 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
+import Box from '@mui/material/Box'
+import CircularProgress from '@mui/material/CircularProgress'
+import { useAuth } from '@/hooks/useAuth'
 import pb from '@/lib/pocketbase'
 
 interface Props {
@@ -7,7 +9,22 @@ interface Props {
 }
 
 export default function ProtectedRoute({ allowedRole }: Props) {
-  const authModel = useAuthStore((s) => s.authModel)
+  const { authModel, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
 
   if (!pb.authStore.isValid || !authModel) {
     return <Navigate to="/login" replace />

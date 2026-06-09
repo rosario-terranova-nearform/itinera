@@ -673,13 +673,13 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID   | Task                                                                                                                          | Output atteso              |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| T0.1 | `npm create vite@latest itinera -- --template react-ts`                                                                       | Progetto base funzionante  |
-| T0.2 | Installare dipendenze frontend (vedi §4)                                                                                      | `package.json` completo    |
-| T0.3 | Configurare ESLint + Prettier + path alias `@/` in `vite.config.ts` e `tsconfig.json`                                        | Import puliti con `@/`     |
-| T0.4 | Scaricare il binario PocketBase da `pocketbase.io`; eseguire `./pocketbase serve`; aprire admin UI `http://127.0.0.1:8090/_/`; impostare email e password del superadmin | PocketBase locale attivo |
-| T0.5 | Creare `.env` con `VITE_PB_URL=http://127.0.0.1:8090` + committare `.env.example`                                            | Config env                 |
-| T0.6 | `src/lib/pocketbase.ts`: esportare singleton `new PocketBase(import.meta.env.VITE_PB_URL)` con tipi generati                 | Client riutilizzabile      |
-| T0.7 | `src/theme/muiTheme.ts`: token da `.agents/design/DESIGN.md` (primary `#005dac`, Inter, status hex, chip 10–15% opacity)     | Tema allineato ai mockup   |
+| ✅ T0.1 | `npm create vite@latest itinera -- --template react-ts`                                                                       | Progetto base funzionante  |
+| ✅ T0.2 | Installare dipendenze frontend (vedi §4)                                                                                      | `package.json` completo    |
+| ✅ T0.3 | Configurare ESLint + Prettier + path alias `@/` in `vite.config.ts` e `tsconfig.json`                                        | Import puliti con `@/`     |
+| ✅ T0.4 | Scaricare il binario PocketBase da `pocketbase.io`; eseguire `./pocketbase serve`; aprire admin UI `http://127.0.0.1:8090/_/`; impostare email e password del superadmin | PocketBase locale attivo |
+| ✅ T0.5 | Creare `.env` con `VITE_PB_URL=http://127.0.0.1:8090` + committare `.env.example`                                            | Config env                 |
+| ✅ T0.6 | `src/lib/pocketbase.ts`: esportare singleton `new PocketBase(import.meta.env.VITE_PB_URL)` con tipi generati                 | Client riutilizzabile      |
+| ✅ T0.7 | `src/theme/muiTheme.ts`: token da `.agents/design/DESIGN.md` (primary `#005dac`, Inter, status hex, chip 10–15% opacity)     | Tema allineato ai mockup   |
 
 ---
 
@@ -687,13 +687,13 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID   | Task                                                                                                                                          | Output atteso                    |
 | ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| T1.1 | `pb_migrations/001_init_schema.js`: definire tutte le collections (`users` extend, `companies`, `appointments`, `appointment_modifications`, `signed_sheets`, `notifications`) con campi, tipi, required e access rules come da §5.2 | Schema DB completo |
-| T1.2 | Applicare migration: `./pocketbase migrate up` (o riavviare il server — le migration vengono applicate automaticamente all'avvio)              | Collections create              |
-| T1.3 | `pb_hooks/auth.pb.js`: hook `onRecordAuthWithPasswordRequest` che lancia `ApiError(403, "Account disattivato")` se `is_active = false`         | Blocco login utenti disattivati  |
-| T1.4 | `pb_hooks/notifications.pb.js`: hook `onRecordAfterCreateSuccess` sulla collection `notifications` → recupera destinatario → `$app.newMailClient().send(message)` | Email automatiche |
-| T1.5 | Generare tipi TypeScript: `npx pocketbase-typegen --url http://127.0.0.1:8090 --email admin@… --password … --out src/lib/pb.types.ts`          | Tipi aggiornati                  |
-| T1.6 | `pb_migrations/002_seed.js`: 1 admin, 3 rappresentanti, 5 aziende, 8 appuntamenti in vari stati                                               | Dati di sviluppo                 |
-| T1.7 | Configurare SMTP in PocketBase Admin UI (`Settings → Mail settings`): host, porta, username, password (es. Resend SMTP relay, Mailgun, SMTP locale per dev) | Email funzionanti in sviluppo |
+| ✅ T1.1 | `pb_migrations/001_init_schema.js`: definire tutte le collections (`users` extend, `companies`, `appointments`, `appointment_modifications`, `signed_sheets`, `notifications`) con campi, tipi, required e access rules come da §5.2 | Schema DB completo |
+| ✅ T1.2 | Applicare migration: `./pocketbase migrate up` (o riavviare il server — le migration vengono applicate automaticamente all'avvio)              | Collections create              |
+| ✅ T1.3 | `pb_hooks/auth.pb.js`: hook `onRecordAuthWithPasswordRequest` che lancia `ApiError(403, "Account disattivato")` se `is_active = false`         | Blocco login utenti disattivati  |
+| ✅ T1.4 | `pb_hooks/notifications.pb.js`: hook `onRecordAfterCreateSuccess` sulla collection `notifications` → recupera destinatario → `$app.newMailClient().send(message)` | Email automatiche |
+| ✅ T1.5 | Generare tipi TypeScript: `npx pocketbase-typegen --url http://127.0.0.1:8090 --email admin@… --password … --out src/lib/pb.types.ts`          | Tipi aggiornati                  |
+| ✅ T1.6 | `pb_migrations/002_seed.js`: 1 admin, 3 rappresentanti, 5 aziende, 8 appuntamenti in vari stati                                               | Dati di sviluppo                 |
+| ✅ T1.7 | Configurare SMTP in PocketBase Admin UI (`Settings → Mail settings`): host, porta, username, password (es. Resend SMTP relay, Mailgun, SMTP locale per dev) | Email funzionanti in sviluppo |
 
 ---
 
@@ -701,14 +701,14 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID   | Task                                                                                                                                                                                   | Output atteso       |
 | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| T2.1 | `LoginPage.tsx`: form email + password → `pb.collection('users').authWithPassword(email, password)` → controllo `pb.authStore.model.is_active` post-login → redirect per ruolo; gestione errori | Login funzionante |
-| T2.2 | `ResetPasswordPage.tsx`: step 1 → `pb.collection('users').requestPasswordReset(email)`; step 2 (da link email) → `pb.collection('users').confirmPasswordReset(token, password, passwordConfirm)` | Reset funzionante |
-| T2.3 | `authStore.ts` (Zustand): state `{ authModel, isLoading }`, actions `login()`, `logout()` (`pb.authStore.clear()`), `init()` che sincronizza da `pb.authStore.onChange` | Store auth |
-| T2.4 | `useAuth.ts`: hook wrapper dello store + `useEffect` che chiama `init()` e registra `pb.authStore.onChange` per reattività                                                            | Hook riutilizzabile |
-| T2.5 | `ProtectedRoute.tsx`: controlla `pb.authStore.isValid` + ruolo → redirect a `/login` se non autenticato; redirect alla home di ruolo se ruolo errato                                 | Guard route         |
-| T2.6 | `AppRouter.tsx`: route pubbliche (`/login`, `/reset-password`), route admin (`/admin/*`), route rep (`/rep/*`)                                                                        | Routing completo    |
-| T2.7 | `RepresentativesPage.tsx` (`/admin/representatives`): tabella rep; form "Crea nuovo rep" → `pb.collection('users').create({email, password, passwordConfirm, first_name, last_name, role:'representative', is_active:true})` + `pb.collection('users').requestPasswordReset(email)` per invio link di benvenuto | Gestione account rep |
-| T2.8 | Disattivazione rep: `pb.collection('users').update(id, {is_active:false})` → l'hook `auth.pb.js` blocca il prossimo tentativo di login; sessioni attive invalidate al prossimo refresh token | Disattivazione account |
+| ✅ T2.1 | `LoginPage.tsx`: form email + password → `pb.collection('users').authWithPassword(email, password)` → controllo `pb.authStore.model.is_active` post-login → redirect per ruolo; gestione errori | Login funzionante |
+| ✅ T2.2 | `ResetPasswordPage.tsx`: step 1 → `pb.collection('users').requestPasswordReset(email)`; step 2 (da link email) → `pb.collection('users').confirmPasswordReset(token, password, passwordConfirm)` | Reset funzionante |
+| ✅ T2.3 | `authStore.ts` (Zustand): state `{ authModel, isLoading }`, actions `login()`, `logout()` (`pb.authStore.clear()`), `init()` che sincronizza da `pb.authStore.onChange` | Store auth |
+| ✅ T2.4 | `useAuth.ts`: hook wrapper dello store + `useEffect` che chiama `init()` e registra `pb.authStore.onChange` per reattività                                                            | Hook riutilizzabile |
+| ✅ T2.5 | `ProtectedRoute.tsx`: controlla `pb.authStore.isValid` + ruolo → redirect a `/login` se non autenticato; redirect alla home di ruolo se ruolo errato                                 | Guard route         |
+| ✅ T2.6 | `AppRouter.tsx`: route pubbliche (`/login`, `/reset-password`), route admin (`/admin/*`), route rep (`/rep/*`)                                                                        | Routing completo    |
+| ✅ T2.7 | `RepresentativesPage.tsx` (`/admin/representatives`): tabella rep; form "Crea nuovo rep" → `pb.collection('users').create({email, password, passwordConfirm, first_name, last_name, role:'representative', is_active:true})` + `pb.collection('users').requestPasswordReset(email)` per invio link di benvenuto | Gestione account rep |
+| ✅ T2.8 | Disattivazione rep: `pb.collection('users').update(id, {is_active:false})` → l'hook `auth.pb.js` blocca il prossimo tentativo di login; sessioni attive invalidate al prossimo refresh token | Disattivazione account |
 
 ---
 
