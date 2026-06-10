@@ -42,14 +42,9 @@ export default function AdminSidebar() {
   return (
     <Box
       sx={{
-        width: SIDEBAR_WIDTH,
-        flexShrink: 0,
-        borderRight: 1,
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100vh',
+        height: '100%',
       }}
     >
       <Box sx={{ px: 2.5, py: 2.5 }}>

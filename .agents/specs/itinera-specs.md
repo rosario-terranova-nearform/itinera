@@ -716,7 +716,7 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID   | Task                                                                                                               | Output atteso       |
 | ---- | ------------------------------------------------------------------------------------------------------------------ | ------------------- |
-| T3.1 | `AdminLayout.tsx`: Drawer laterale persistente (240px) + `<Outlet />`                                              | Layout admin        |
+| ✅ T3.1 | `AdminLayout.tsx`: Drawer laterale persistente (240px) + `<Outlet />`                                              | Layout admin        |
 | T3.2 | `AdminSidebar.tsx`: logo Itinera, voci nav (Dashboard, Pianificazione, Aziende, Rappresentanti, Documenti, Impostazioni), voce attiva evidenziata | Sidebar allineata al design |
 | T3.3 | `Topbar.tsx` (condivisa): titolo pagina, `UserMenu` (avatar via `pb.files.getUrl()` + logout) | Topbar funzionante  |
 | T3.4 | `RepLayout.tsx`: Topbar + Outlet; mobile bottom nav (Dashboard, Calendario, Profilo); da `md` sidebar             | Layout rep          |
@@ -821,6 +821,7 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 | T11.8 | Error boundaries React + pagine `/404` e `/error` con link "Torna alla home"                                                            | Gestione errori     |
 | T11.9 | `AdminSettingsPage.tsx`: sezione crea rep + toggle notifiche (§7.7); placeholder riepilogo email giornaliero                            | Impostazioni admin  |
 | T11.10 | Utility `generateReferenceCode()`: formato `VIS-{id.slice(0,6).toUpperCase()}` applicato al create appointment                        | Codice visita in UI |
+| T11.11 | Adattare tutta la UI anche a mobile | responsive design |
 
 ---
 
