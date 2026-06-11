@@ -2,10 +2,11 @@ import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
 import { Outlet } from 'react-router-dom'
 import AdminSidebar, { SIDEBAR_WIDTH } from './AdminSidebar'
+import Topbar from './Topbar'
 
 export default function AdminLayout() {
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ display: 'flex', width: '100%', minHeight: '100vh', bgcolor: 'background.default' }}>
       <Drawer
         variant="permanent"
         open
@@ -23,7 +24,17 @@ export default function AdminLayout() {
       >
         <AdminSidebar />
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, minWidth: 0, minHeight: '100vh' }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Topbar />
         <Outlet />
       </Box>
     </Box>
