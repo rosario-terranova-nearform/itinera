@@ -729,11 +729,11 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID   | Task                                                                                                                                  | Output atteso     |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| T4.1 | `api/companies.ts`: `getAll(filter?)`, `getById(id)`, `create(data)`, `update(id, data)`, `softDelete(id)` via `pb.collection('companies')` | Layer API     |
-| T4.2 | `useCompanies.ts`: TanStack Query hooks (`useCompaniesQuery`, `useCreateCompanyMutation`, ecc.)                                       | Hook dati         |
-| T4.3 | `CompaniesPage.tsx`: MUI DataGrid con ricerca per nome/città, pulsante "Aggiungi"                                                     | Lista aziende     |
-| T4.4 | `CompanyForm.tsx`: campi come da §5.2 (nome*, indirizzo, città, provincia, CAP, segmento, referente, titolo referente, telefono, email, note); validazione Zod | Form azienda |
-| T4.5 | `CompanyDetailPage.tsx`: card info azienda + tab "Appuntamenti" con storico                                                           | Dettaglio azienda |
+| ✅ T4.1 | `api/companies.ts`: `getAll(filter?)`, `getById(id)`, `create(data)`, `update(id, data)`, `softDelete(id)` via `pb.collection('companies')` | Layer API     |
+| ✅ T4.2 | `useCompanies.ts`: TanStack Query hooks (`useCompaniesQuery`, `useCreateCompanyMutation`, ecc.)                                       | Hook dati         |
+| ✅ T4.3 | `CompaniesPage.tsx`: MUI DataGrid con ricerca per nome/città, pulsante "Aggiungi"                                                     | Lista aziende     |
+| ✅ T4.4 | `CompanyForm.tsx`: campi come da §5.2 (nome*, indirizzo, città, provincia, CAP, segmento, referente, titolo referente, telefono, email, note); validazione Zod | Form azienda |
+| ✅ T4.5 | `CompanyDetailPage.tsx`: card info azienda + tab "Appuntamenti" con storico                                                           | Dettaglio azienda |
 
 ---
 
