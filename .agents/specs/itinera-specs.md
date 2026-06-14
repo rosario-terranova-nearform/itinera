@@ -720,7 +720,7 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 | ✅ T3.2 | `AdminSidebar.tsx`: logo Itinera, voci nav (Dashboard, Pianificazione, Aziende, Rappresentanti, Documenti, Impostazioni), voce attiva evidenziata | Sidebar allineata al design |
 | ✅ T3.3 | `Topbar.tsx` (condivisa): titolo pagina, `UserMenu` (avatar via `pb.files.getUrl()` + logout) | Topbar funzionante  |
 | ✅ T3.4 | `RepLayout.tsx`: Topbar + Outlet; mobile bottom nav (Dashboard, Calendario, Profilo); da `md` sidebar             | Layout rep          |
-| T3.5 | `UserMenu.tsx`: nome utente, voce "Profilo", voce "Logout" che chiama `pb.authStore.clear()` + redirect           | Menu utente         |
+| ✅ T3.5 | `UserMenu.tsx`: nome utente, voce "Profilo", voce "Logout" che chiama `pb.authStore.clear()` + redirect           | Menu utente         |
 
 
 ---
