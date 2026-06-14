@@ -3,8 +3,9 @@ import LoginPage from '@/pages/auth/LoginPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import ProtectedRoute from '@/components/common/ProtectedRoute'
 import AdminLayout from '@/components/layout/AdminLayout'
+import RepLayout from '@/components/layout/RepLayout'
 import { adminRouteElements } from '@/router/AdminRoutes'
-import RepRoutes from '@/router/RepRoutes'
+import { repRouteElements } from '@/router/RepRoutes'
 
 export default function AppRouter() {
   return (
@@ -15,7 +16,7 @@ export default function AppRouter() {
         <Route element={<AdminLayout />}>{adminRouteElements}</Route>
       </Route>
       <Route path="/rep" element={<ProtectedRoute allowedRole="representative" />}>
-        <Route path="*" element={<RepRoutes />} />
+        <Route element={<RepLayout />}>{repRouteElements}</Route>
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
