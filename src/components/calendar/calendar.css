@@ -1,0 +1,41 @@
+/* FullCalendar base styles (v6 ships without bundled CSS) */
+.fc {
+  font-size: 0.875rem;
+}
+
+.fc .fc-toolbar {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.fc .fc-button {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.fc .fc-daygrid-day-number,
+.fc .fc-col-header-cell-cushion {
+  padding: 0.35rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.fc .fc-daygrid-event,
+.fc .fc-timegrid-event {
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 0.75rem;
+}
+
+.fc .fc-day-today {
+  background-color: rgba(0, 93, 172, 0.06);
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: #e2e8f0;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+  border-color: #e2e8f0;
+}

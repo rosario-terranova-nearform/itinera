@@ -741,15 +741,15 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID   | Task                                                                                                                                                    | Output atteso       |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| T5.1 | `api/appointments.ts`: `getAll(filter?)`, `getById(id, expand?)`, `create(data)`, `update(id, data)`, `cancel(id)`, `logModification(data)` via `pb.collection('appointments')` e `pb.collection('appointment_modifications')` | Layer API |
-| T5.2 | `useAppointments.ts`: hooks TanStack Query con invalidation cache alla mutazione                                                                        | Hook dati           |
-| T5.3 | `AppointmentsPage.tsx`: tabella con colonne (data, rappresentante, azienda, stato, azioni), filtri (stato, rep, data da/a), pulsante "Crea"             | Lista admin         |
-| T5.4 | `AppointmentForm.tsx`: Autocomplete azienda/rappresentante (da PocketBase con `?filter`), DateTimePicker, note, internal_notes; validazione Zod         | Form create/edit    |
-| T5.5 | Al `create()`: POST `appointments` + POST `notifications` (tipo `appointment_created`, destinatario: il rep); l'hook invia email automaticamente        | Notifica automatica |
-| T5.6 | `CalendarPage.tsx`: `CalendarView` con tutti gli appuntamenti, colore per stato, click evento → Drawer dettaglio                                        | Calendario admin    |
-| T5.7 | `AppointmentDetailPage.tsx` (admin): card info, `AppointmentTimeline`, sezione foglio firma, bottoni modifica/annulla                                   | Dettaglio admin     |
-| T5.8 | Azione "Modifica": PATCH `appointments`; se `status='confirmed'` → `status='pending'`; se solo `pending` resta `pending`; log in `appointment_modifications`; POST notification `appointment_updated` | Edit coerente con macchina stati |
-| T5.9 | Azione "Annulla": `ConfirmDialog` → PATCH `status='cancelled'` + POST notification `appointment_cancelled`                                              | Annullamento        |
+| ✅ T5.1 | `api/appointments.ts`: `getAll(filter?)`, `getById(id, expand?)`, `create(data)`, `update(id, data)`, `cancel(id)`, `logModification(data)` via `pb.collection('appointments')` e `pb.collection('appointment_modifications')` | Layer API |
+| ✅ T5.2 | `useAppointments.ts`: hooks TanStack Query con invalidation cache alla mutazione                                                                        | Hook dati           |
+| ✅ T5.3 | `AppointmentsPage.tsx`: tabella con colonne (data, rappresentante, azienda, stato, azioni), filtri (stato, rep, data da/a), pulsante "Crea"             | Lista admin         |
+| ✅ T5.4 | `AppointmentForm.tsx`: Autocomplete azienda/rappresentante (da PocketBase con `?filter`), DateTimePicker, note, internal_notes; validazione Zod         | Form create/edit    |
+| ✅ T5.5 | Al `create()`: POST `appointments` + POST `notifications` (tipo `appointment_created`, destinatario: il rep); l'hook invia email automaticamente        | Notifica automatica |
+| ✅ T5.6 | `CalendarPage.tsx`: `CalendarView` con tutti gli appuntamenti, colore per stato, click evento → Drawer dettaglio                                        | Calendario admin    |
+| ✅ T5.7 | `AppointmentDetailPage.tsx` (admin): card info, `AppointmentTimeline`, sezione foglio firma, bottoni modifica/annulla                                   | Dettaglio admin     |
+| ✅ T5.8 | Azione "Modifica": PATCH `appointments`; se `status='confirmed'` → `status='pending'`; se solo `pending` resta `pending`; log in `appointment_modifications`; POST notification `appointment_updated` | Edit coerente con macchina stati |
+| ✅ T5.9 | Azione "Annulla": `ConfirmDialog` → PATCH `status='cancelled'` + POST notification `appointment_cancelled`                                              | Annullamento        |
 
 ---
 

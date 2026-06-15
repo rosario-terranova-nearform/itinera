@@ -137,7 +137,9 @@ export default function CompanyForm({
               error={!!errors.province}
               helperText={errors.province?.message}
               sx={{ width: 100 }}
-              inputProps={{ maxLength: 2, style: { textTransform: 'uppercase' } }}
+              slotProps={{
+                htmlInput: { maxLength: 2, style: { textTransform: 'uppercase' } },
+              }}
             />
             <TextField
               label="CAP"
