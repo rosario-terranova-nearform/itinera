@@ -7,6 +7,7 @@ import {
   getByCompany,
   getById,
   getModifications,
+  getUpcomingForRepresentative,
   update,
   type AppointmentCreateInput,
   type AppointmentUpdateInput,
@@ -26,6 +27,14 @@ export function useAppointmentsQuery(options?: {
   return useQuery({
     queryKey: [...APPOINTMENTS_QUERY_KEY, filter ?? 'all'],
     queryFn: () => getAll(filter),
+  })
+}
+
+export function useRepUpcomingAppointmentsQuery(representativeId: string | undefined) {
+  return useQuery({
+    queryKey: [...APPOINTMENTS_QUERY_KEY, 'rep-upcoming', representativeId],
+    queryFn: () => getUpcomingForRepresentative(representativeId!),
+    enabled: !!representativeId,
   })
 }
 

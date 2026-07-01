@@ -40,11 +40,6 @@ export type AppointmentModificationInput = {
   reason: string
 }
 
-function buildCompanyAddress(company?: CompanyRecord): string {
-  if (!company) return ''
-  return [company.address, company.city, company.province].filter(Boolean).join(', ')
-}
-
 async function notifyRepresentative(
   appointment: AppointmentRecord,
   type: 'appointment_created' | 'appointment_updated' | 'appointment_cancelled',
@@ -52,7 +47,7 @@ async function notifyRepresentative(
   const company = appointment.expand?.company
   const companyName = company?.name ?? 'Azienda'
   const dateLabel = formatDateTime(appointment.scheduled_datetime)
-  const address = buildCompanyAddress(company)
+  const address = buildCompanyFullAddress(company)
 
   const titles: Record<typeof type, string> = {
     appointment_created: `📅 Nuovo incarico – ${companyName} il ${dateLabel}`,
@@ -83,12 +78,27 @@ async function notifyRepresentative(
   })
 }
 
-export async function getAll(filter?: string): Promise<AppointmentRecord[]> {
+export async function getAll(
+  filter?: string,
+  sort = '-scheduled_datetime',
+): Promise<AppointmentRecord[]> {
   return pb.collection('appointments').getFullList<AppointmentRecord>({
-    sort: '-scheduled_datetime',
+    sort,
     filter: filter || undefined,
     expand: DEFAULT_EXPAND,
   })
+}
+
+export async function getUpcomingForRepresentative(
+  representativeId: string,
+): Promise<AppointmentRecord[]> {
+  const filter = buildAppointmentsFilter({
+    representativeId,
+    dateFrom: new Date().toISOString(),
+    activeOnly: true,
+  })
+
+  return getAll(filter, 'scheduled_datetime')
 }
 
 export async function getById(
@@ -212,11 +222,15 @@ export function buildAppointmentsFilter(options: {
   representativeId?: string
   dateFrom?: string
   dateTo?: string
+  activeOnly?: boolean
 }): string | undefined {
   const parts: string[] = []
 
   if (options.status) {
     parts.push(`status = "${options.status}"`)
+  }
+  if (options.activeOnly) {
+    parts.push('status != "cancelled" && status != "completed"')
   }
   if (options.representativeId) {
     parts.push(`representative = "${options.representativeId}"`)
@@ -229,6 +243,15 @@ export function buildAppointmentsFilter(options: {
   }
 
   return parts.length > 0 ? parts.join(' && ') : undefined
+}
+
+export function buildCompanyFullAddress(company?: CompanyRecord): string {
+  if (!company) return ''
+  return [company.address, company.city, company.province].filter(Boolean).join(', ')
+}
+
+export function buildMapsUrl(address: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
 }
 
 export function getRepresentativeName(appointment: AppointmentRecord): string {
