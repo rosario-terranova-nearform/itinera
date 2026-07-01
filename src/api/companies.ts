@@ -39,3 +39,33 @@ export async function update(id: string, data: CompanyUpdateInput): Promise<Comp
 export async function softDelete(id: string): Promise<CompanyRecord> {
   return pb.collection('companies').update<CompanyRecord>(id, { is_active: false })
 }
+
+export function formatCompanyAddress(company: Pick<
+  CompanyRecord,
+  'address' | 'city' | 'province' | 'postal_code'
+>): string {
+  return [company.address, company.city, company.province, company.postal_code]
+    .filter(Boolean)
+    .join(', ')
+}
+
+export function filterCompaniesBySearch(
+  companies: CompanyRecord[],
+  query: string,
+): CompanyRecord[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return companies
+
+  return companies.filter((company) => {
+    const address = formatCompanyAddress(company).toLowerCase()
+    const contact = [company.contact_person, company.contact_title].filter(Boolean).join(' ').toLowerCase()
+    const segment = company.segment?.toLowerCase() ?? ''
+
+    return (
+      company.name.toLowerCase().includes(q) ||
+      segment.includes(q) ||
+      contact.includes(q) ||
+      address.includes(q)
+    )
+  })
+}
