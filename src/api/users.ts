@@ -54,3 +54,29 @@ export async function createRepresentative(
 export async function setRepresentativeActive(id: string, is_active: boolean): Promise<UserRecord> {
   return pb.collection('users').update<UserRecord>(id, { is_active })
 }
+
+export type ProfileUpdateInput = {
+  first_name: string
+  last_name: string
+  phone: string
+}
+
+export type PasswordUpdateInput = {
+  oldPassword: string
+  password: string
+  passwordConfirm: string
+}
+
+export async function updateProfile(id: string, data: ProfileUpdateInput): Promise<UserRecord> {
+  return pb.collection('users').update<UserRecord>(id, data)
+}
+
+export async function updatePassword(id: string, data: PasswordUpdateInput): Promise<UserRecord> {
+  return pb.collection('users').update<UserRecord>(id, data)
+}
+
+export async function uploadAvatar(id: string, file: File): Promise<UserRecord> {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  return pb.collection('users').update<UserRecord>(id, formData)
+}

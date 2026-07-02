@@ -760,9 +760,9 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 | ✅ T6.1 | `RepDashboardPage.tsx`: card prossima visita, tabella "Settimana in arrivo"                      | Dashboard rep          |
 | ✅ T6.2 | `RepCalendarPage.tsx`: viste giorno/settimana/mese; query filtrata `?filter=representative="${currentUser.id}"`; mini-calendario; riepilogo stati | Pianificazione rep |
 | ✅ T6.3 | `RepCompaniesPage.tsx`: griglia/card aziende sola lettura con ricerca (segmento, referente, indirizzo)                                   | Rubrica aziende        |
-| T6.4 | `RepAppointmentDetailPage.tsx`: `VisitInfoCard`, note UC (esclusa da query con `fields`), audit trail, azioni per stato                  | Dettaglio visita       |
-| T6.5 | `RescheduleAppointmentPage.tsx` + `RescheduleForm.tsx`: data/ora/motivo separati; submit secondo matrice transizioni §6                  | Riprogrammazione       |
-| T6.6 | `RepProfilePage.tsx`: PATCH `first_name`, `last_name`, `phone`; upload avatar via `pb.collection('users').update(id, formData)` (multipart); email read-only; cambio password via PATCH con `{oldPassword, password, passwordConfirm}` | Profilo rep |
+| ✅ T6.4 | `RepAppointmentDetailPage.tsx`: `VisitInfoCard`, note UC (esclusa da query con `fields`), audit trail, azioni per stato                  | Dettaglio visita       |
+| ✅ T6.5 | `RescheduleAppointmentPage.tsx` + `RescheduleForm.tsx`: data/ora/motivo separati; submit secondo matrice transizioni §6                  | Riprogrammazione       |
+| ✅ T6.6 | `RepProfilePage.tsx`: PATCH `first_name`, `last_name`, `phone`; upload avatar via `pb.collection('users').update(id, formData)` (multipart); email read-only; cambio password via PATCH con `{oldPassword, password, passwordConfirm}` | Profilo rep |
 
 ---
 

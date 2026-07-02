@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import duration from 'dayjs/plugin/duration'
 import isToday from 'dayjs/plugin/isToday'
 import isTomorrow from 'dayjs/plugin/isTomorrow'
@@ -70,6 +70,24 @@ export function formatUpcomingLabel(datetime: string, end?: string): string {
   return durationLabel
     ? `${dayLabel}, ${timeLabel} (${durationLabel})`
     : `${dayLabel}, ${timeLabel}`
+}
+
+export function formatVisitSchedule(start: string, end?: string): string {
+  const dateLabel = formatDate(start)
+  const timeLabel = end ? `${formatTime(start)} – ${formatTime(end)}` : formatTime(start)
+  return `${dateLabel}, ${timeLabel}`
+}
+
+export function buildScheduledDatetime(data: {
+  date: Dayjs
+  time: Dayjs
+}): string {
+  return data.date
+    .hour(data.time.hour())
+    .minute(data.time.minute())
+    .second(0)
+    .millisecond(0)
+    .toISOString()
 }
 
 export function getWeekEndIso(): string {

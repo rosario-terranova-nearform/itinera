@@ -2,12 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   buildAppointmentsFilter,
   cancel,
+  confirm,
   create,
   getAll,
   getByCompany,
   getById,
+  getByIdForRep,
   getModifications,
   getUpcomingForRepresentative,
+  reschedule,
   update,
   type AppointmentCreateInput,
   type AppointmentUpdateInput,
@@ -35,6 +38,14 @@ export function useRepUpcomingAppointmentsQuery(representativeId: string | undef
     queryKey: [...APPOINTMENTS_QUERY_KEY, 'rep-upcoming', representativeId],
     queryFn: () => getUpcomingForRepresentative(representativeId!),
     enabled: !!representativeId,
+  })
+}
+
+export function useRepAppointmentQuery(id: string) {
+  return useQuery({
+    queryKey: [...APPOINTMENTS_QUERY_KEY, 'rep', id],
+    queryFn: () => getByIdForRep(id),
+    enabled: !!id,
   })
 }
 
@@ -105,6 +116,46 @@ export function useCancelAppointmentMutation() {
     onSuccess: (record) => {
       void queryClient.invalidateQueries({ queryKey: APPOINTMENTS_QUERY_KEY })
       void queryClient.invalidateQueries({ queryKey: [...APPOINTMENTS_QUERY_KEY, record.id] })
+    },
+  })
+}
+
+export function useConfirmAppointmentMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      context,
+    }: {
+      id: string
+      context: { modifiedBy: string; repName: string }
+    }) => confirm(id, context),
+    onSuccess: (record) => {
+      void queryClient.invalidateQueries({ queryKey: APPOINTMENTS_QUERY_KEY })
+      void queryClient.invalidateQueries({ queryKey: [...APPOINTMENTS_QUERY_KEY, record.id] })
+      void queryClient.invalidateQueries({ queryKey: [...APPOINTMENTS_QUERY_KEY, 'rep', record.id] })
+    },
+  })
+}
+
+export function useRescheduleAppointmentMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+      context,
+    }: {
+      id: string
+      data: { scheduled_datetime: string; reason: string }
+      context: { modifiedBy: string; repName: string }
+    }) => reschedule(id, data, context),
+    onSuccess: (record) => {
+      void queryClient.invalidateQueries({ queryKey: APPOINTMENTS_QUERY_KEY })
+      void queryClient.invalidateQueries({ queryKey: [...APPOINTMENTS_QUERY_KEY, record.id] })
+      void queryClient.invalidateQueries({ queryKey: [...APPOINTMENTS_QUERY_KEY, 'rep', record.id] })
     },
   })
 }

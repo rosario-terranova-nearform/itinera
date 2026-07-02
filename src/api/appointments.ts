@@ -12,6 +12,9 @@ import { generateReferenceCode } from '@/utils/referenceCode'
 
 const DEFAULT_EXPAND = 'company,representative,created_by'
 
+export const REP_APPOINTMENT_FIELDS =
+  'id,company,representative,scheduled_datetime,end_datetime,original_datetime,reference_code,status,notes,created_by,created,updated'
+
 export type AppointmentCreateInput = {
   company: string
   representative: string
@@ -78,6 +81,48 @@ async function notifyRepresentative(
   })
 }
 
+async function notifyAdmin(
+  appointment: AppointmentRecord,
+  type: 'appointment_confirmed' | 'appointment_modified',
+  context: {
+    repName: string
+    oldDatetime?: string
+    reason?: string
+  },
+): Promise<void> {
+  if (!appointment.created_by) return
+
+  const company = appointment.expand?.company
+  const companyName = company?.name ?? 'Azienda'
+  const dateLabel = formatDateTime(appointment.scheduled_datetime)
+
+  const titles: Record<typeof type, string> = {
+    appointment_confirmed: `✅ Incarico confermato da ${context.repName}`,
+    appointment_modified: `🔄 Data modificata da ${context.repName} – ${companyName}`,
+  }
+
+  const messages: Record<typeof type, string> = {
+    appointment_confirmed: `Il rappresentante ha confermato l'incarico presso ${companyName} per il ${dateLabel}.`,
+    appointment_modified: [
+      context.oldDatetime
+        ? `Vecchia data: ${formatDateTime(context.oldDatetime)}`
+        : '',
+      `Nuova data: ${dateLabel}`,
+      context.reason ? `Motivo: ${context.reason}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
+  }
+
+  await createNotification({
+    user: appointment.created_by,
+    appointment: appointment.id,
+    type,
+    title: titles[type],
+    message: messages[type],
+  })
+}
+
 export async function getAll(
   filter?: string,
   sort = '-scheduled_datetime',
@@ -106,6 +151,13 @@ export async function getById(
   expand: string = DEFAULT_EXPAND,
 ): Promise<AppointmentRecord> {
   return pb.collection('appointments').getOne<AppointmentRecord>(id, { expand })
+}
+
+export async function getByIdForRep(id: string): Promise<AppointmentRecord> {
+  return pb.collection('appointments').getOne<AppointmentRecord>(id, {
+    expand: DEFAULT_EXPAND,
+    fields: REP_APPOINTMENT_FIELDS,
+  })
 }
 
 export async function getByCompany(companyId: string): Promise<AppointmentRecord[]> {
@@ -213,6 +265,70 @@ export async function cancel(id: string): Promise<AppointmentRecord> {
 
   const expanded = await getById(updated.id)
   await notifyRepresentative(expanded, 'appointment_cancelled')
+
+  return expanded
+}
+
+export async function confirm(
+  id: string,
+  context: { modifiedBy: string; repName: string },
+): Promise<AppointmentRecord> {
+  const current = await getByIdForRep(id)
+
+  if (current.status !== 'pending') {
+    throw new Error('Solo gli appuntamenti in attesa possono essere confermati.')
+  }
+
+  const updated = await pb.collection('appointments').update<AppointmentRecord>(id, {
+    status: 'confirmed',
+  })
+
+  const expanded = await getByIdForRep(updated.id)
+  await notifyAdmin(expanded, 'appointment_confirmed', { repName: context.repName })
+
+  return expanded
+}
+
+export async function reschedule(
+  id: string,
+  data: { scheduled_datetime: string; reason: string },
+  context: { modifiedBy: string; repName: string },
+): Promise<AppointmentRecord> {
+  const current = await getByIdForRep(id)
+
+  if (current.status !== 'pending' && current.status !== 'confirmed') {
+    throw new Error('Questo appuntamento non può essere riprogrammato.')
+  }
+
+  const oldDatetime = current.scheduled_datetime
+  let end_datetime = current.end_datetime
+
+  if (end_datetime) {
+    const delta =
+      new Date(data.scheduled_datetime).getTime() - new Date(oldDatetime).getTime()
+    end_datetime = new Date(new Date(end_datetime).getTime() + delta).toISOString()
+  }
+
+  const updated = await pb.collection('appointments').update<AppointmentRecord>(id, {
+    scheduled_datetime: data.scheduled_datetime,
+    end_datetime,
+    status: 'confirmed',
+  })
+
+  await logModification({
+    appointment: id,
+    modified_by: context.modifiedBy,
+    old_datetime: oldDatetime,
+    new_datetime: data.scheduled_datetime,
+    reason: data.reason,
+  })
+
+  const expanded = await getByIdForRep(updated.id)
+  await notifyAdmin(expanded, 'appointment_modified', {
+    repName: context.repName,
+    oldDatetime,
+    reason: data.reason,
+  })
 
   return expanded
 }
