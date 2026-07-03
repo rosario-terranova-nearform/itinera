@@ -156,6 +156,9 @@ export function useRescheduleAppointmentMutation() {
       void queryClient.invalidateQueries({ queryKey: APPOINTMENTS_QUERY_KEY })
       void queryClient.invalidateQueries({ queryKey: [...APPOINTMENTS_QUERY_KEY, record.id] })
       void queryClient.invalidateQueries({ queryKey: [...APPOINTMENTS_QUERY_KEY, 'rep', record.id] })
+      void queryClient.invalidateQueries({
+        queryKey: [...APPOINTMENTS_QUERY_KEY, record.id, 'modifications'],
+      })
     },
   })
 }

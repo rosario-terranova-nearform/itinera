@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -31,6 +31,7 @@ import { getDisplayName } from '@/types'
 export default function RepAppointmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const { authModel } = useAuth()
 
   const { data: appointment, isLoading, error: loadError } = useRepAppointmentQuery(id ?? '')
@@ -46,7 +47,23 @@ export default function RepAppointmentDetailPage() {
   const [snackbar, setSnackbar] = useState<{
     message: string
     severity: 'success' | 'error'
-  } | null>(null)
+  } | null>(() => {
+    const state = location.state as { rescheduled?: boolean } | null
+    if (state?.rescheduled) {
+      return {
+        message: 'Appuntamento riprogrammato. L\'Unità Centrale riceverà una notifica.',
+        severity: 'success',
+      }
+    }
+    return null
+  })
+
+  useEffect(() => {
+    const state = location.state as { rescheduled?: boolean } | null
+    if (state?.rescheduled) {
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location.pathname, location.state, navigate])
 
   const isOwner = appointment?.representative === authModel?.id
   const canConfirm = appointment?.status === 'pending'
@@ -194,7 +211,7 @@ export default function RepAppointmentDetailPage() {
                 startIcon={<CalendarMonthOutlinedIcon />}
                 onClick={() => navigate(`/rep/appointments/${appointment.id}/reschedule`)}
               >
-                Modifica orario
+                Modifica data/ora
               </Button>
             ) : null}
             {canConfirm ? (

@@ -58,11 +58,7 @@ export default function RescheduleAppointmentPage() {
           repName: getDisplayName(authModel),
         },
       })
-      setSnackbar({
-        message: 'Appuntamento riprogrammato. L\'Unità Centrale riceverà una notifica.',
-        severity: 'success',
-      })
-      navigate(`/rep/appointments/${appointment.id}`)
+      navigate(`/rep/appointments/${appointment.id}`, { state: { rescheduled: true } })
     } catch {
       setSnackbar({ message: 'Errore nella riprogrammazione.', severity: 'error' })
     }

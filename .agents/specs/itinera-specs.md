@@ -770,10 +770,10 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID   | Task                                                                                                                                                    | Output atteso        |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| T7.1 | **Azione "Conferma"** (`pending`): `ConfirmDialog` → PATCH `status='confirmed'` + POST notification `appointment_confirmed`                             | Conferma funzionante |
-| T7.2 | **Azione "Modifica data/ora"** (`pending` o `confirmed`): naviga a `RescheduleAppointmentPage`                                                           | Flusso modifica      |
-| T7.3 | `RescheduleForm.tsx`: `DatePicker` + `TimePicker` separati + motivo obbligatorio (Zod `min(1)`)                                                          | Form allineato mockup |
-| T7.4 | Submit reschedule: PATCH `scheduled_datetime` + `status='confirmed'` + POST `appointment_modifications` + POST notification `appointment_modified`       | Modifica completa    |
+| ✅ T7.1 | **Azione "Conferma"** (`pending`): `ConfirmDialog` → PATCH `status='confirmed'` + POST notification `appointment_confirmed`                             | Conferma funzionante |
+| ✅ T7.2 | **Azione "Modifica data/ora"** (`pending` o `confirmed`): naviga a `RescheduleAppointmentPage`                                                           | Flusso modifica      |
+| ✅ T7.3 | `RescheduleForm.tsx`: `DatePicker` + `TimePicker` separati + motivo obbligatorio (Zod `min(1)`)                                                          | Form allineato mockup |
+| ✅ T7.4 | Submit reschedule: PATCH `scheduled_datetime` + `status='confirmed'` + POST `appointment_modifications` + POST notification `appointment_modified`       | Modifica completa    |
 | T7.5 | **Carica foglio firma** solo se `status='confirmed'`: accesso dal dettaglio appuntamento o da `RepDocumentsPage` con `appointment_id` preselezionato     | Upload gated by stato |
 | T7.6 | `FileUploadZone.tsx`: `react-dropzone`, accetta `image/jpeg`, `image/png`, `image/webp`, `application/pdf`, max 10 MB; anteprima thumbnail + progress bar | Componente upload   |
 | T7.7 | Upload: costruire `FormData` con `file`, `file_name`, `file_size`, `mime_type`, `appointment`, `uploaded_by` → `pb.collection('signed_sheets').create(formData)` → PATCH `status='completed'` → POST notification `signed_sheet_uploaded` | Upload end-to-end |
@@ -825,19 +825,46 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 ---
 
-### FASE 12 – Testing e Deploy
+### FASE 12 – Testing e Sicurezza
+
+> Eseguire **dopo** il completamento delle fasi funzionali (0–11). Obiettivo: copertura test automatizzata, validazione autorizzazioni e hardening server-side prima del deploy in produzione.
+
+#### Testing automatizzato
 
 | ID    | Task                                                                                                            | Output atteso      |
 | ----- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
-| T12.1 | Unit test `useAuth` (Vitest + testing-library): mock `pocketbase` client, test login/logout/redirect            | Test auth          |
-| T12.2 | Unit test `AppointmentForm`: validazione Zod, submit, error states                                             | Test form          |
-| T12.3 | Integration test notifiche: verifica che POST `notifications` crei il record e inneschi l'hook email            | Test notifiche     |
-| T12.4 | E2E Playwright: flusso admin (login → crea appuntamento → verifica creazione notifica)                               | Test E2E           |
-| T12.5 | E2E Playwright: flusso rep (login → modifica appuntamento → carica foglio firma)                               | Test E2E           |
-| T12.6 | GitHub Actions CI: lint + typecheck + unit test + build frontend                                               | Pipeline CI        |
-| T12.7 | Deploy PocketBase su server (Railway, Fly.io o VPS): montare volume persistente su `pb_data/`; copiare `pb_hooks/` e `pb_migrations/`; eseguire `./pocketbase serve` | Backend produzione |
-| T12.8 | Deploy frontend su Vercel: env var `VITE_PB_URL` puntata al PocketBase di produzione; build command `vite build` | Frontend produzione |
-| T12.9 | Configurare URL di redirect nelle template email PocketBase (`Settings → Email templates`): URL produzione per reset password e verifica email | Auth email prod |
+| T12.1 | Unit test `useAuth` (Vitest + testing-library): mock client PocketBase, test login/logout/redirect per ruolo    | Test auth          |
+| T12.2 | Unit test `AppointmentForm`: validazione Zod, submit, error states                                              | Test form admin    |
+| T12.3 | Unit test `RescheduleForm` + `CompanyForm`: validazione Zod, campi obbligatori, messaggi errore                 | Test form rep/UC   |
+| T12.4 | Unit test utility: `buildScheduledDatetime`, `generateReferenceCode`, `buildAppointmentsFilter`                 | Test helper        |
+| T12.5 | Integration test notifiche: POST `notifications` crea il record; mock/hook verifica payload email               | Test notifiche     |
+| T12.6 | E2E Playwright: flusso admin (login → crea appuntamento → verifica notifica)                                    | Test E2E admin     |
+| T12.7 | E2E Playwright: flusso rep (login → conferma → riprogramma → carica foglio firma)                               | Test E2E rep       |
+| T12.8 | GitHub Actions CI: lint + typecheck + unit test + build frontend; job E2E opzionale su `main`                   | Pipeline CI        |
+
+#### Hardening sicurezza
+
+| ID     | Task                                                                                                                                                                                                 | Output atteso              |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| T12.9  | **Audit API rules**: checklist su tutte le collections (§5.2); verificare `listRule`/`viewRule`/`createRule`/`updateRule`/`deleteRule` in `pb_migrations/001_init_schema.js`                       | Regole documentate e OK    |
+| T12.10 | **`pb_hooks/appointments.pb.js`**: `onRecordViewRequest` / `onRecordsListRequest` — rimuovere `internal_notes` se `@request.auth.role = "representative"` (defense in depth oltre al parametro `fields`) | Note interne protette      |
+| T12.11 | **`pb_hooks/appointments.pb.js`**: `onRecordUpdateRequest` — rep può aggiornare solo i propri appuntamenti; validare transizioni stato (§6); bloccare modifica `company`/`representative`/`created_by` da rep | Macchina stati server-side |
+| T12.12 | **`pb_hooks/signed_sheets.pb.js`**: `onRecordCreateRequest` — MIME ammessi (`image/jpeg`, `image/png`, `image/webp`, `application/pdf`), max 10 MB, `uploaded_by = @request.auth.id`, appuntamento del rep e `status = confirmed` | Upload sicuro              |
+| T12.13 | **Audit filtri frontend**: tutte le query con filtro utente usano binding `{:placeholder}` del JS SDK; nessuna interpolazione diretta di input in stringhe filter                                    | Filter injection prevenuta |
+| T12.14 | **Test autorizzazione API** (integration): rep A non legge/aggiorna appuntamenti di rep B; rep non crea aziende; admin non bypassabile da ruolo errato; `internal_notes` assente nelle risposte rep   | Test sicurezza API         |
+| T12.15 | **Sessioni e token**: logout azzera `pb.authStore`; `ProtectedRoute` reindirizza su token scaduto; account `is_active=false` bloccato anche su refresh token (hook `auth.pb.js`)                       | Sessioni sicure            |
+| T12.16 | **File access**: download fogli firma solo via `pb.files.getUrl()` + `pb.files.getToken()` (TTL 5 min); nessun URL pubblico persistente; admin `viewed_by_admin` aggiornabile solo da admin           | Accesso file controllato   |
+| T12.17 | **Produzione PocketBase**: abilitare rate limiting API; impostare `PB_ENCRYPTION`; reverse proxy HTTPS; CORS limitato al dominio frontend; documentare in README deploy                                | Hardening infra            |
+
+---
+
+### FASE 13 – Deploy
+
+| ID    | Task                                                                                                            | Output atteso      |
+| ----- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
+| T13.1 | Deploy PocketBase su server (Railway, Fly.io o VPS): montare volume persistente su `pb_data/`; copiare `pb_hooks/` e `pb_migrations/`; eseguire `./pocketbase serve` | Backend produzione |
+| T13.2 | Deploy frontend su Vercel: env var `VITE_PB_URL` puntata al PocketBase di produzione; build command `vite build` | Frontend produzione |
+| T13.3 | Configurare URL di redirect nelle template email PocketBase (`Settings → Email templates`): URL produzione per reset password e verifica email | Auth email prod |
 
 ---
 
