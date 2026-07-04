@@ -33,7 +33,7 @@ interface NavItem {
 }
 
 const sidebarNavItems: NavItem[] = [
-  { label: 'Dashboard', path: '/rep', icon: DashboardIcon, matchPrefixes: ['/rep'] },
+  { label: 'Dashboard', path: '/rep', icon: DashboardIcon },
   {
     label: 'Pianificazione',
     path: '/rep/calendar',
@@ -41,7 +41,7 @@ const sidebarNavItems: NavItem[] = [
     matchPrefixes: ['/rep/calendar', '/rep/appointments'],
   },
   { label: 'Aziende', path: '/rep/companies', icon: BusinessIcon },
-  { label: 'Documenti', path: '/rep/documents', icon: DescriptionIcon },
+  { label: 'Documenti', path: '/rep/documents', icon: DescriptionIcon, matchPrefixes: ['/rep/documents'] },
   { label: 'Impostazioni', path: '/rep/settings', icon: SettingsIcon },
 ]
 
@@ -52,6 +52,9 @@ const bottomNavItems: NavItem[] = [
 ]
 
 function isNavActive(pathname: string, item: NavItem): boolean {
+  if (item.path === '/rep' && !item.matchPrefixes?.length) {
+    return pathname === '/rep'
+  }
   if (item.matchPrefixes) {
     return item.matchPrefixes.some(
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),

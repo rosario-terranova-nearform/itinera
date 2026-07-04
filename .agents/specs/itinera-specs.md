@@ -774,9 +774,9 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 | ✅ T7.2 | **Azione "Modifica data/ora"** (`pending` o `confirmed`): naviga a `RescheduleAppointmentPage`                                                           | Flusso modifica      |
 | ✅ T7.3 | `RescheduleForm.tsx`: `DatePicker` + `TimePicker` separati + motivo obbligatorio (Zod `min(1)`)                                                          | Form allineato mockup |
 | ✅ T7.4 | Submit reschedule: PATCH `scheduled_datetime` + `status='confirmed'` + POST `appointment_modifications` + POST notification `appointment_modified`       | Modifica completa    |
-| T7.5 | **Carica foglio firma** solo se `status='confirmed'`: accesso dal dettaglio appuntamento o da `RepDocumentsPage` con `appointment_id` preselezionato     | Upload gated by stato |
-| T7.6 | `FileUploadZone.tsx`: `react-dropzone`, accetta `image/jpeg`, `image/png`, `image/webp`, `application/pdf`, max 10 MB; anteprima thumbnail + progress bar | Componente upload   |
-| T7.7 | Upload: costruire `FormData` con `file`, `file_name`, `file_size`, `mime_type`, `appointment`, `uploaded_by` → `pb.collection('signed_sheets').create(formData)` → PATCH `status='completed'` → POST notification `signed_sheet_uploaded` | Upload end-to-end |
+| ✅ T7.5 | **Carica foglio firma** solo se `status='confirmed'`: accesso dal dettaglio appuntamento o da `RepDocumentsPage` con `appointment_id` preselezionato     | Upload gated by stato |
+| ✅ T7.6 | `FileUploadZone.tsx`: `react-dropzone`, accetta `image/jpeg`, `image/png`, `image/webp`, `application/pdf`, max 10 MB; anteprima thumbnail + progress bar | Componente upload   |
+| ✅ T7.7 | Upload: costruire `FormData` con `file`, `file_name`, `file_size`, `mime_type`, `appointment`, `uploaded_by` → `pb.collection('signed_sheets').create(formData)` → PATCH `status='completed'` → POST notification `signed_sheet_uploaded` | Upload end-to-end |
 
 ---
 

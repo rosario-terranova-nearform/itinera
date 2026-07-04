@@ -9,9 +9,11 @@ const PAGE_TITLE_RULES: Array<{ match: (pathname: string) => boolean; title: str
   { match: (pathname) => pathname.startsWith('/admin/representatives'), title: 'Rappresentanti' },
   { match: (pathname) => pathname.startsWith('/admin/documents'), title: 'Documenti' },
   { match: (pathname) => pathname.startsWith('/admin/settings'), title: 'Impostazioni' },
+  { match: (pathname) => pathname.startsWith('/rep/documents'), title: 'Documenti' },
   { match: (pathname) => pathname.startsWith('/rep/calendar'), title: 'Calendario' },
+  { match: (pathname) => pathname.startsWith('/rep/appointments'), title: 'Dettaglio visita' },
   { match: (pathname) => pathname.startsWith('/rep/profile'), title: 'Profilo' },
-  { match: (pathname) => pathname.startsWith('/rep'), title: 'Dashboard' },
+  { match: (pathname) => pathname === '/rep', title: 'Dashboard' },
 ]
 
 export function getPageTitle(pathname: string): string {
