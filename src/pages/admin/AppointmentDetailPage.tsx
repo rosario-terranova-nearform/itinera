@@ -13,18 +13,21 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import EditIcon from '@mui/icons-material/Edit'
 import CancelIcon from '@mui/icons-material/Cancel'
 import DescriptionIcon from '@mui/icons-material/Description'
-import { useQuery } from '@tanstack/react-query'
 import AppointmentForm, { type AppointmentFormData } from '@/components/appointments/AppointmentForm'
 import AppointmentTimeline from '@/components/appointments/AppointmentTimeline'
 import StatusChip from '@/components/common/StatusChip'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
+import SignedSheetPreview from '@/components/documents/SignedSheetPreview'
 import {
   useAppointmentQuery,
   useAppointmentModificationsQuery,
   useUpdateAppointmentMutation,
   useCancelAppointmentMutation,
 } from '@/hooks/useAppointments'
-import { getByAppointmentId } from '@/api/signedSheets'
+import {
+  getAdminSheetStatusLabel,
+  useSignedSheetByAppointmentQuery,
+} from '@/hooks/useSignedSheets'
 import { getCompanyName, getRepresentativeName } from '@/api/appointments'
 import { useAuth } from '@/hooks/useAuth'
 import { getDisplayName } from '@/types'
@@ -50,11 +53,7 @@ export default function AppointmentDetailPage() {
 
   const { data: appointment, isLoading, error: loadError } = useAppointmentQuery(id ?? '')
   const { data: modifications = [] } = useAppointmentModificationsQuery(id ?? '')
-  const { data: signedSheet } = useQuery({
-    queryKey: ['signed-sheets', 'by-appointment', id],
-    queryFn: () => getByAppointmentId(id ?? ''),
-    enabled: !!id,
-  })
+  const { data: signedSheet, refetch: refetchSignedSheet } = useSignedSheetByAppointmentQuery(id ?? '')
 
   const updateMutation = useUpdateAppointmentMutation()
   const cancelMutation = useCancelAppointmentMutation()
@@ -244,15 +243,19 @@ export default function AppointmentDetailPage() {
               </Typography>
             </Box>
             {signedSheet ? (
-              <Box>
-                <InfoRow label="Nome file" value={signedSheet.file_name} />
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <InfoRow
+                  label="Stato lettura UC"
+                  value={getAdminSheetStatusLabel(signedSheet)}
+                />
                 <InfoRow
                   label="Caricato il"
                   value={formatDateTime(signedSheet.created)}
                 />
-                <InfoRow
-                  label="Stato lettura UC"
-                  value={signedSheet.viewed_by_admin ? 'Visualizzato' : 'Non letto'}
+                <SignedSheetPreview
+                  sheet={signedSheet}
+                  trackView
+                  onViewed={() => void refetchSignedSheet()}
                 />
               </Box>
             ) : (

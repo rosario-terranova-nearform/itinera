@@ -786,13 +786,13 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID    | Task                                                                                                                                              | Output atteso            |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| T9.0  | `RepDocumentsPage.tsx`: upload zone, riepilogo stati derivati (§7.6), lista `signed_sheets` del rep con download                                  | Hub documenti rep        |
-| T9.0b | `DocumentsPortalPage.tsx` (admin): KPI upload/non letti, tabella globale fogli firma, filtri, link ad appuntamento/azienda                        | Portale documenti UC     |
-| T9.1  | `AppointmentDetailPage` admin: sezione condizionale foglio firma se `status='completed'` o foglio caricato                                        | Sezione visibile         |
-| T9.2  | `api/signedSheets.ts`: `getByAppointmentId(id)`, `getFileUrl(record)` via `pb.files.getUrl()` + `pb.files.getToken()` (TTL 5 min), `markAsViewed(id)` | Layer API             |
-| T9.3  | Preview: thumbnail se immagine, icona PDF se PDF; pulsante "Apri" (nuova tab con URL + file token) e "Scarica" (attributo `download`)             | Preview + download       |
-| T9.4  | Al primo click "Apri": PATCH `viewed_by_admin=true`, `viewed_at=new Date().toISOString()`                                                         | Tracking visualizzazione |
-| T9.5  | Badge "Non letto" su riga appuntamento in lista admin finché `viewed_by_admin=false`                                                              | Indicatore visivo        |
+| ✅ T9.0  | `RepDocumentsPage.tsx`: upload zone, riepilogo stati derivati (§7.6), lista `signed_sheets` del rep con download                                  | Hub documenti rep        |
+| ✅ T9.0b | `DocumentsPortalPage.tsx` (admin): KPI upload/non letti, tabella globale fogli firma, filtri, link ad appuntamento/azienda                        | Portale documenti UC     |
+| ✅ T9.1  | `AppointmentDetailPage` admin: sezione condizionale foglio firma se `status='completed'` o foglio caricato                                        | Sezione visibile         |
+| ✅ T9.2  | `api/signedSheets.ts`: `getByAppointmentId(id)`, `getFileUrl(record)` via `pb.files.getUrl()` + `pb.files.getToken()` (TTL 5 min), `markAsViewed(id)` | Layer API             |
+| ✅ T9.3  | Preview: thumbnail se immagine, icona PDF se PDF; pulsante "Apri" (nuova tab con URL + file token) e "Scarica" (attributo `download`)             | Preview + download       |
+| ✅ T9.4  | Al primo click "Apri": PATCH `viewed_by_admin=true`, `viewed_at=new Date().toISOString()`                                                         | Tracking visualizzazione |
+| ✅ T9.5  | Badge "Non letto" su riga appuntamento in lista admin finché `viewed_by_admin=false`                                                              | Indicatore visivo        |
 
 ---
 

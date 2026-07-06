@@ -6,6 +6,7 @@ import CompanyDetailPage from '@/pages/admin/CompanyDetailPage'
 import CalendarPage from '@/pages/admin/CalendarPage'
 import AppointmentsPage from '@/pages/admin/AppointmentsPage'
 import AppointmentDetailPage from '@/pages/admin/AppointmentDetailPage'
+import DocumentsPortalPage from '@/pages/admin/DocumentsPortalPage'
 
 export const adminRouteElements = (
   <>
@@ -16,7 +17,7 @@ export const adminRouteElements = (
     <Route path="appointments/:id" element={<AppointmentDetailPage />} />
     <Route path="companies" element={<CompaniesPage />} />
     <Route path="companies/:id" element={<CompanyDetailPage />} />
-    <Route path="documents" element={<AdminDashboardPage />} />
+    <Route path="documents" element={<DocumentsPortalPage />} />
     <Route path="settings" element={<AdminDashboardPage />} />
     <Route path="*" element={<AdminDashboardPage />} />
   </>

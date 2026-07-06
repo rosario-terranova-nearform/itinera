@@ -87,11 +87,41 @@ export async function getByAppointmentId(appointmentId: string): Promise<SignedS
   }
 }
 
+export type SignedSheetsFilter = {
+  viewed?: boolean
+  representativeId?: string
+  search?: string
+}
+
+export async function getAll(filter?: SignedSheetsFilter): Promise<SignedSheetRecord[]> {
+  const parts: string[] = []
+
+  if (filter?.viewed === true) {
+    parts.push('viewed_by_admin = true')
+  } else if (filter?.viewed === false) {
+    parts.push('viewed_by_admin = false')
+  }
+
+  if (filter?.representativeId) {
+    parts.push(`uploaded_by = "${filter.representativeId}"`)
+  }
+
+  if (filter?.search?.trim()) {
+    parts.push(`file_name ~ "${filter.search.trim()}"`)
+  }
+
+  return pb.collection('signed_sheets').getFullList<SignedSheetRecord>({
+    filter: parts.length > 0 ? parts.join(' && ') : undefined,
+    sort: '-created',
+    expand: 'appointment,uploaded_by,appointment.company',
+  })
+}
+
 export async function getByRepresentative(representativeId: string): Promise<SignedSheetRecord[]> {
   return pb.collection('signed_sheets').getFullList<SignedSheetRecord>({
     filter: `uploaded_by = "${representativeId}"`,
     sort: '-created',
-    expand: 'appointment',
+    expand: 'appointment,appointment.company',
   })
 }
 
@@ -142,6 +172,22 @@ export async function uploadSignedSheet(
   return sheet
 }
 
-export function getFileUrl(record: SignedSheetRecord): string {
-  return pb.files.getUrl(record, record.file)
+export async function getFileUrl(record: SignedSheetRecord): Promise<string> {
+  const token = await pb.files.getToken()
+  return pb.files.getUrl(record, record.file, { token })
+}
+
+export async function markAsViewed(id: string): Promise<SignedSheetRecord> {
+  return pb.collection('signed_sheets').update<SignedSheetRecord>(id, {
+    viewed_by_admin: true,
+    viewed_at: new Date().toISOString(),
+  })
+}
+
+export function isImageMimeType(mimeType: string): boolean {
+  return mimeType.startsWith('image/')
+}
+
+export function isPdfMimeType(mimeType: string): boolean {
+  return mimeType === 'application/pdf'
 }

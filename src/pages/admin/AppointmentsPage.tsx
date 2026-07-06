@@ -9,7 +9,9 @@ import MenuItem from '@mui/material/MenuItem'
 import Card from '@mui/material/Card'
 import Alert from '@mui/material/Alert'
 import Snackbar from '@mui/material/Snackbar'
+import Chip from '@mui/material/Chip'
 import AddIcon from '@mui/icons-material/Add'
+import MarkEmailUnreadIcon from '@mui/icons-material/MarkEmailUnread'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import AppointmentForm, { type AppointmentFormData } from '@/components/appointments/AppointmentForm'
 import StatusChip from '@/components/common/StatusChip'
@@ -17,6 +19,7 @@ import {
   useAppointmentsQuery,
   useCreateAppointmentMutation,
 } from '@/hooks/useAppointments'
+import { useUnreadSignedSheetsMapQuery } from '@/hooks/useSignedSheets'
 import { useRepresentativesQuery } from '@/hooks/useRepresentatives'
 import { useAuth } from '@/hooks/useAuth'
 import { getCompanyName, getRepresentativeName } from '@/api/appointments'
@@ -57,6 +60,7 @@ export default function AppointmentsPage() {
   )
 
   const { data: appointments = [], isLoading, error: loadError } = useAppointmentsQuery(queryOptions)
+  const { data: unreadSheetsMap = new Map() } = useUnreadSignedSheetsMapQuery()
   const createMutation = useCreateAppointmentMutation()
 
   const handleCreate = async (data: AppointmentFormData) => {
@@ -101,8 +105,22 @@ export default function AppointmentsPage() {
     {
       field: 'status',
       headerName: 'Stato',
-      width: 130,
-      renderCell: (params) => <StatusChip status={params.value as AppointmentStatus} />,
+      width: 180,
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <StatusChip status={params.value as AppointmentStatus} />
+          {unreadSheetsMap.has(params.row.id) ? (
+            <Chip
+              size="small"
+              icon={<MarkEmailUnreadIcon sx={{ fontSize: '14px !important' }} />}
+              label="Non letto"
+              color="warning"
+              variant="outlined"
+              sx={{ height: 24, '& .MuiChip-label': { px: 0.75, fontSize: '0.7rem' } }}
+            />
+          ) : null}
+        </Box>
+      ),
     },
     {
       field: 'actions',

@@ -10,12 +10,13 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Snackbar from '@mui/material/Snackbar'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
-import Chip from '@mui/material/Chip'
 import FileUploadZone from '@/components/common/FileUploadZone'
+import DocumentListItem from '@/components/documents/DocumentListItem'
+import DocumentStatusSummary from '@/components/documents/DocumentStatusSummary'
 import { getCompanyName } from '@/api/appointments'
 import { useAppointmentsQuery } from '@/hooks/useAppointments'
 import {
-  getSheetStatusLabel,
+  summarizeRepSheets,
   useRepSignedSheetsQuery,
   useSignedSheetByAppointmentQuery,
   useUploadSignedSheetMutation,
@@ -124,6 +125,7 @@ export default function RepDocumentsPage() {
   }
 
   const isLoading = appointmentsLoading || sheetsLoading
+  const summary = summarizeRepSheets(uploadedSheets)
 
   return (
     <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
@@ -133,6 +135,15 @@ export default function RepDocumentsPage() {
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Carica il foglio firma delle visite confermate. Dopo l&apos;upload la visita passa a completata.
       </Typography>
+
+      {uploadedSheets.length > 0 ? (
+        <DocumentStatusSummary
+          items={[
+            { label: 'In elaborazione', value: summary.inProgress, color: '#ed6c02' },
+            { label: 'Ricevuto da UC', value: summary.received, color: '#2e7d32' },
+          ]}
+        />
+      ) : null}
 
       <Card variant="outlined" sx={{ mb: 3 }}>
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -229,44 +240,24 @@ export default function RepDocumentsPage() {
             </Typography>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              {uploadedSheets.map((sheet) => (
-                <Box
-                  key={sheet.id}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 2,
-                    p: 1.5,
-                    borderRadius: 1,
-                    border: 1,
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
-                      {sheet.file_name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Caricato il {formatDateTime(sheet.created)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-                    <Chip
-                      size="small"
-                      label={getSheetStatusLabel(sheet)}
-                      color={sheet.viewed_by_admin ? 'success' : 'warning'}
-                      variant="outlined"
-                    />
-                    <Button
-                      size="small"
-                      onClick={() => navigate(`/rep/appointments/${sheet.appointment}`)}
-                    >
-                      Dettaglio
-                    </Button>
-                  </Box>
-                </Box>
-              ))}
+              {uploadedSheets.map((sheet) => {
+                const companyName = sheet.expand?.appointment
+                  ? getCompanyName(sheet.expand.appointment)
+                  : undefined
+
+                return (
+                  <DocumentListItem
+                    key={sheet.id}
+                    sheet={sheet}
+                    subtitle={
+                      companyName
+                        ? `${companyName} · ${formatDateTime(sheet.created)}`
+                        : `Caricato il ${formatDateTime(sheet.created)}`
+                    }
+                    onDetail={() => navigate(`/rep/appointments/${sheet.appointment}`)}
+                  />
+                )
+              })}
             </Box>
           )}
         </CardContent>

@@ -83,6 +83,10 @@ export interface SignedSheetRecord extends RecordModel {
   uploaded_by: string
   viewed_by_admin: boolean
   viewed_at: string
+  expand?: {
+    appointment?: AppointmentRecord
+    uploaded_by?: UserRecord
+  }
 }
 
 export interface NotificationRecord extends RecordModel {
