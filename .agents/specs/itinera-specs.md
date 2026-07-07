@@ -800,10 +800,10 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID    | Task                                                                                                                              | Output atteso     |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| T10.1 | `CalendarView.tsx`: wrapper FullCalendar con `dayGridMonth`, `timeGridWeek`, `timeGridDay`, pulsante oggi, navigazione mese       | Calendario base   |
-| T10.2 | Mappatura eventi: `appointments[]` → `EventInput[]` con colore da `getStatusColor(status)`                                        | Colorazione stati |
-| T10.3 | Click su evento → `AppointmentDrawer.tsx` con riepilogo e link "Vai al dettaglio"                                                 | Drawer evento     |
-| T10.4 | (Solo admin) Drag & drop evento su nuova data → `ConfirmDialog` → PATCH + log `appointment_modifications` + POST notification rep | Drag & drop admin |
+| ✅ T10.1 | `CalendarView.tsx`: wrapper FullCalendar con `dayGridMonth`, `timeGridWeek`, `timeGridDay`, pulsante oggi, navigazione mese       | Calendario base   |
+| ✅ T10.2 | Mappatura eventi: `appointments[]` → `EventInput[]` con colore da `getStatusColor(status)`                                        | Colorazione stati |
+| ✅ T10.3 | Click su evento → `AppointmentDrawer.tsx` con riepilogo e link "Vai al dettaglio"                                                 | Drawer evento     |
+| ✅ T10.4 | (Solo admin) Drag & drop evento su nuova data → `ConfirmDialog` → PATCH + log `appointment_modifications` + POST notification rep | Drag & drop admin |
 
 ---
 
@@ -858,13 +858,6 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 ---
 
-### FASE 13 – Deploy
-
-| ID    | Task                                                                                                            | Output atteso      |
-| ----- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
-| T13.1 | Deploy PocketBase su server (Railway, Fly.io o VPS): montare volume persistente su `pb_data/`; copiare `pb_hooks/` e `pb_migrations/`; eseguire `./pocketbase serve` | Backend produzione |
-| T13.2 | Deploy frontend su Vercel: env var `VITE_PB_URL` puntata al PocketBase di produzione; build command `vite build` | Frontend produzione |
-| T13.3 | Configurare URL di redirect nelle template email PocketBase (`Settings → Email templates`): URL produzione per reset password e verifica email | Auth email prod |
 
 ---
 

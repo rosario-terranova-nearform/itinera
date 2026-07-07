@@ -9,17 +9,22 @@ import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import AddIcon from '@mui/icons-material/Add'
 import ListIcon from '@mui/icons-material/List'
-import CalendarView from '@/components/calendar/CalendarView'
+import CalendarView, { type EventDropInfo } from '@/components/calendar/CalendarView'
 import AppointmentDrawer from '@/components/calendar/AppointmentDrawer'
+import { shiftEndDatetime } from '@/components/calendar/calendarUtils'
 import AppointmentForm, { type AppointmentFormData } from '@/components/appointments/AppointmentForm'
+import ConfirmDialog from '@/components/common/ConfirmDialog'
 import StatusChip from '@/components/common/StatusChip'
 import {
   useAppointmentsQuery,
   useCreateAppointmentMutation,
+  useUpdateAppointmentMutation,
 } from '@/hooks/useAppointments'
 import { useAuth } from '@/hooks/useAuth'
 import type { AppointmentRecord, AppointmentStatus } from '@/types'
 import { statusColors } from '@/theme/muiTheme'
+import { formatDateTime } from '@/utils/dateUtils'
+import { getCompanyName } from '@/api/appointments'
 
 const STATUS_SUMMARY: Array<{ status: AppointmentStatus; label: string }> = [
   { status: 'pending', label: 'In attesa' },
@@ -33,10 +38,12 @@ export default function CalendarPage() {
   const { authModel } = useAuth()
   const { data: appointments = [], isLoading, error: loadError } = useAppointmentsQuery()
   const createMutation = useCreateAppointmentMutation()
+  const updateMutation = useUpdateAppointmentMutation()
 
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRecord | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
+  const [pendingDrop, setPendingDrop] = useState<EventDropInfo | null>(null)
 
   const statusCounts = STATUS_SUMMARY.map(({ status, label }) => ({
     status,
@@ -60,6 +67,46 @@ export default function CalendarPage() {
       created_by: authModel.id,
     })
     setFormOpen(false)
+  }
+
+  const handleEventDrop = (info: EventDropInfo) => {
+    setPendingDrop(info)
+  }
+
+  const handleDropCancel = () => {
+    pendingDrop?.revert()
+    setPendingDrop(null)
+  }
+
+  const handleDropConfirm = async () => {
+    if (!pendingDrop || !authModel?.id) return
+
+    const { appointment, newStart } = pendingDrop
+    const newScheduledDatetime = newStart.toISOString()
+    const shiftedEnd = shiftEndDatetime(
+      appointment.scheduled_datetime,
+      newScheduledDatetime,
+      appointment.end_datetime || undefined,
+    )
+
+    try {
+      await updateMutation.mutateAsync({
+        id: appointment.id,
+        data: {
+          scheduled_datetime: newScheduledDatetime,
+          ...(shiftedEnd ? { end_datetime: shiftedEnd } : {}),
+        },
+        context: {
+          current: appointment,
+          modifiedBy: authModel.id,
+          reason: 'Riprogrammazione da calendario (drag & drop)',
+        },
+      })
+      setPendingDrop(null)
+    } catch {
+      pendingDrop.revert()
+      setPendingDrop(null)
+    }
   }
 
   return (
@@ -127,6 +174,8 @@ export default function CalendarPage() {
           <CalendarView
             appointments={appointments}
             onEventClick={handleEventClick}
+            onEventDrop={handleEventDrop}
+            editable
             height="calc(100vh - 320px)"
           />
         )}
@@ -146,6 +195,30 @@ export default function CalendarPage() {
         onClose={() => setFormOpen(false)}
         onSubmit={handleCreate}
         isPending={createMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!pendingDrop}
+        title="Conferma spostamento"
+        message={
+          pendingDrop ? (
+            <>
+              Spostare l&apos;appuntamento presso{' '}
+              <strong>{getCompanyName(pendingDrop.appointment)}</strong> da{' '}
+              <strong>{formatDateTime(pendingDrop.appointment.scheduled_datetime)}</strong> a{' '}
+              <strong>{formatDateTime(pendingDrop.newStart.toISOString())}</strong>?
+              <br />
+              <br />
+              Il rappresentante riceverà una notifica della modifica.
+            </>
+          ) : (
+            ''
+          )
+        }
+        confirmLabel="Conferma spostamento"
+        onConfirm={() => void handleDropConfirm()}
+        onCancel={handleDropCancel}
+        isLoading={updateMutation.isPending}
       />
 
       <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>

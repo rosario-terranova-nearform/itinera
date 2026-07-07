@@ -3,7 +3,7 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import type { DatesSetArg, EventClickArg } from '@fullcalendar/core'
+import type { DatesSetArg, EventClickArg, EventDropArg } from '@fullcalendar/core'
 import itLocale from '@fullcalendar/core/locales/it'
 import './calendar.css'
 import Box from '@mui/material/Box'
@@ -12,27 +12,40 @@ import { appointmentsToEvents } from './calendarUtils'
 
 export type CalendarViewMode = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'
 
+export type EventDropInfo = {
+  appointment: AppointmentRecord
+  newStart: Date
+  revert: () => void
+}
+
 interface CalendarViewProps {
   appointments: AppointmentRecord[]
   onEventClick?: (appointment: AppointmentRecord) => void
+  onEventDrop?: (info: EventDropInfo) => void
   height?: string | number
   view?: CalendarViewMode
   currentDate?: Date
   onDateChange?: (date: Date) => void
   showViewSwitcher?: boolean
+  editable?: boolean
 }
 
 export default function CalendarView({
   appointments,
   onEventClick,
+  onEventDrop,
   height = 'auto',
   view = 'dayGridMonth',
   currentDate,
   onDateChange,
   showViewSwitcher = true,
+  editable = false,
 }: CalendarViewProps) {
   const calendarRef = useRef<FullCalendar>(null)
-  const events = useMemo(() => appointmentsToEvents(appointments), [appointments])
+  const events = useMemo(
+    () => appointmentsToEvents(appointments, { editable }),
+    [appointments, editable],
+  )
 
   useEffect(() => {
     const api = calendarRef.current?.getApi()
@@ -55,6 +68,22 @@ export default function CalendarView({
 
   const handleDatesSet = (info: DatesSetArg) => {
     onDateChange?.(info.view.currentStart)
+  }
+
+  const handleEventDrop = (info: EventDropArg) => {
+    const appointment = info.event.extendedProps.appointment as AppointmentRecord | undefined
+    const newStart = info.event.start
+
+    if (!appointment || !newStart || !onEventDrop) {
+      info.revert()
+      return
+    }
+
+    onEventDrop({
+      appointment,
+      newStart,
+      revert: info.revert,
+    })
   }
 
   return (
@@ -101,6 +130,8 @@ export default function CalendarView({
         }}
         height={height}
         events={events}
+        editable={editable}
+        eventDrop={editable ? handleEventDrop : undefined}
         eventClick={handleEventClick}
         datesSet={handleDatesSet}
         nowIndicator
