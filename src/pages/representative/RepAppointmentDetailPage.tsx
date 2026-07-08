@@ -7,8 +7,7 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Alert from '@mui/material/Alert'
-import CircularProgress from '@mui/material/CircularProgress'
-import Snackbar from '@mui/material/Snackbar'
+import Skeleton from '@mui/material/Skeleton'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined'
@@ -27,6 +26,7 @@ import { getByAppointmentId } from '@/api/signedSheets'
 import { getCompanyName } from '@/api/appointments'
 import { useAuth } from '@/hooks/useAuth'
 import { getDisplayName } from '@/types'
+import { notify } from '@/utils/toast'
 
 export default function RepAppointmentDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -44,23 +44,11 @@ export default function RepAppointmentDetailPage() {
 
   const confirmMutation = useConfirmAppointmentMutation()
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [snackbar, setSnackbar] = useState<{
-    message: string
-    severity: 'success' | 'error'
-  } | null>(() => {
-    const state = location.state as { rescheduled?: boolean } | null
-    if (state?.rescheduled) {
-      return {
-        message: 'Appuntamento riprogrammato. L\'Unità Centrale riceverà una notifica.',
-        severity: 'success',
-      }
-    }
-    return null
-  })
 
   useEffect(() => {
     const state = location.state as { rescheduled?: boolean } | null
     if (state?.rescheduled) {
+      notify.success('Appuntamento riprogrammato. L\'Unità Centrale riceverà una notifica.')
       navigate(location.pathname, { replace: true, state: null })
     }
   }, [location.pathname, location.state, navigate])
@@ -82,16 +70,18 @@ export default function RepAppointmentDetailPage() {
         },
       })
       setConfirmOpen(false)
-      setSnackbar({ message: 'Visita confermata. L\'Unità Centrale riceverà una notifica.', severity: 'success' })
+      notify.success('Visita confermata. L\'Unità Centrale riceverà una notifica.')
     } catch {
-      setSnackbar({ message: 'Errore nella conferma della visita.', severity: 'error' })
+      notify.error('Errore nella conferma della visita.')
     }
   }
 
   if (isLoading) {
     return (
-      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress />
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Skeleton variant="text" width={120} height={36} sx={{ mb: 2 }} />
+        <Skeleton variant="rounded" height={200} sx={{ mb: 2 }} />
+        <Skeleton variant="rounded" height={160} />
       </Box>
     )
   }
@@ -239,19 +229,6 @@ export default function RepAppointmentDetailPage() {
         onCancel={() => setConfirmOpen(false)}
         isLoading={confirmMutation.isPending}
       />
-
-      <Snackbar
-        open={!!snackbar}
-        autoHideDuration={5000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        {snackbar ? (
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)}>
-            {snackbar.message}
-          </Alert>
-        ) : undefined}
-      </Snackbar>
     </Box>
   )
 }

@@ -4,7 +4,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Card from '@mui/material/Card'
 import Alert from '@mui/material/Alert'
-import CircularProgress from '@mui/material/CircularProgress'
+import CalendarSkeleton from '@/components/common/CalendarSkeleton'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import CalendarView, { type CalendarViewMode } from '@/components/calendar/CalendarView'
@@ -94,9 +94,7 @@ export default function RepCalendarPage() {
       ) : null}
 
       {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
+        <CalendarSkeleton height={480} />
       ) : (
         <Box
           sx={{

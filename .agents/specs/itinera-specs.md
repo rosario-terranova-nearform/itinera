@@ -811,17 +811,17 @@ Mappare i token in `.agents/design/DESIGN.md` su `muiTheme.ts`: palette primary 
 
 | ID    | Task                                                                                                                                    | Output atteso       |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| T11.1 | Skeleton loaders (`MUI Skeleton`) per tabelle, calendario e card durante il caricamento                                                 | Loading UX          |
-| T11.2 | `react-toastify`: feedback toast per ogni azione (es. "Appuntamento creato", "Foglio firma caricato")                                   | Feedback utente     |
-| T11.3 | `ConfirmDialog.tsx` riutilizzabile: `title`, `message`, `confirmText`, `onConfirm`, `isLoading` state durante operazione async          | Dialog generico     |
-| T11.4 | `EmptyState.tsx`: illustrazione + testo per liste vuote                                                                                 | Empty states        |
-| T11.5 | `StatusChip.tsx`: MUI `Chip` con colore e label per ogni stato (`pending`→arancio, `confirmed`→verde, `completed`→blu, `cancelled`→rosso) | Chip riutilizzabile |
-| T11.6 | `AppointmentTimeline.tsx`: MUI `Timeline` con tutti gli eventi (creazione, modifiche, conferma, upload foglio)                          | Storico visivo      |
-| T11.7 | Responsive layout: `xs/sm` mobile rep (bottom nav), `md+` admin sidebar                                                                | Mobile-friendly     |
-| T11.8 | Error boundaries React + pagine `/404` e `/error` con link "Torna alla home"                                                            | Gestione errori     |
-| T11.9 | `AdminSettingsPage.tsx`: sezione crea rep + toggle notifiche (§7.7); placeholder riepilogo email giornaliero                            | Impostazioni admin  |
-| T11.10 | Utility `generateReferenceCode()`: formato `VIS-{id.slice(0,6).toUpperCase()}` applicato al create appointment                        | Codice visita in UI |
-| T11.11 | Adattare tutta la UI anche a mobile | responsive design |
+| ✅ T11.1 | Skeleton loaders (`MUI Skeleton`) per tabelle, calendario e card durante il caricamento                                                 | Loading UX          |
+| ✅ T11.2 | `react-toastify`: feedback toast per ogni azione (es. "Appuntamento creato", "Foglio firma caricato")                                   | Feedback utente     |
+| ✅ T11.3 | `ConfirmDialog.tsx` riutilizzabile: `title`, `message`, `confirmText`, `onConfirm`, `isLoading` state durante operazione async          | Dialog generico     |
+| ✅ T11.4 | `EmptyState.tsx`: illustrazione + testo per liste vuote                                                                                 | Empty states        |
+| ✅ T11.5 | `StatusChip.tsx`: MUI `Chip` con colore e label per ogni stato (`pending`→arancio, `confirmed`→verde, `completed`→blu, `cancelled`→rosso) | Chip riutilizzabile |
+| ✅ T11.6 | `AppointmentTimeline.tsx`: MUI `Timeline` con tutti gli eventi (creazione, modifiche, conferma, upload foglio)                          | Storico visivo      |
+| ✅ T11.7 | Responsive layout: `xs/sm` mobile rep (bottom nav), `md+` admin sidebar                                                                | Mobile-friendly     |
+| ✅ T11.8 | Error boundaries React + pagine `/404` e `/error` con link "Torna alla home"                                                            | Gestione errori     |
+| ✅ T11.9 | `AdminSettingsPage.tsx`: sezione crea rep + toggle notifiche (§7.7); placeholder riepilogo email giornaliero                            | Impostazioni admin  |
+| ✅ T11.10 | Utility `generateReferenceCode()`: formato `VIS-{id.slice(0,6).toUpperCase()}` applicato al create appointment                        | Codice visita in UI |
+| ✅ T11.11 | Adattare tutta la UI anche a mobile | responsive design |
 
 ---
 

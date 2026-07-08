@@ -8,7 +8,6 @@ import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import Card from '@mui/material/Card'
 import Alert from '@mui/material/Alert'
-import Snackbar from '@mui/material/Snackbar'
 import Chip from '@mui/material/Chip'
 import AddIcon from '@mui/icons-material/Add'
 import MarkEmailUnreadIcon from '@mui/icons-material/MarkEmailUnread'
@@ -24,6 +23,7 @@ import { useRepresentativesQuery } from '@/hooks/useRepresentatives'
 import { useAuth } from '@/hooks/useAuth'
 import { getCompanyName, getRepresentativeName } from '@/api/appointments'
 import { formatDateTime } from '@/utils/dateUtils'
+import { notify } from '@/utils/toast'
 import type { AppointmentStatus } from '@/types'
 
 const STATUS_OPTIONS: Array<{ value: AppointmentStatus | ''; label: string }> = [
@@ -44,10 +44,6 @@ export default function AppointmentsPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [formOpen, setFormOpen] = useState(false)
-  const [snackbar, setSnackbar] = useState<{
-    message: string
-    severity: 'success' | 'error'
-  } | null>(null)
 
   const queryOptions = useMemo(
     () => ({
@@ -75,9 +71,9 @@ export default function AppointmentsPage() {
         created_by: authModel.id,
       })
       setFormOpen(false)
-      setSnackbar({ message: 'Appuntamento creato. Il rappresentante riceverà una notifica.', severity: 'success' })
+      notify.success('Appuntamento creato. Il rappresentante riceverà una notifica.')
     } catch {
-      setSnackbar({ message: 'Errore nella creazione dell\'appuntamento.', severity: 'error' })
+      notify.error('Errore nella creazione dell\'appuntamento.')
     }
   }
 
@@ -241,18 +237,6 @@ export default function AppointmentsPage() {
         isPending={createMutation.isPending}
       />
 
-      <Snackbar
-        open={!!snackbar}
-        autoHideDuration={5000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        {snackbar ? (
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)}>
-            {snackbar.message}
-          </Alert>
-        ) : undefined}
-      </Snackbar>
     </Box>
   )
 }

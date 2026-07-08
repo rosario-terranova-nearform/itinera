@@ -8,7 +8,6 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import Alert from '@mui/material/Alert'
-import Snackbar from '@mui/material/Snackbar'
 import InputAdornment from '@mui/material/InputAdornment'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import BusinessIcon from '@mui/icons-material/Business'
@@ -24,6 +23,7 @@ import {
 } from '@/hooks/useCompanies'
 import CompanyForm, { type CompanyFormData } from '@/components/companies/CompanyForm'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
+import { notify } from '@/utils/toast'
 import { type CompanyRecord } from '@/types'
 
 function SummaryCard({
@@ -78,10 +78,6 @@ export default function CompaniesPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingCompany, setEditingCompany] = useState<CompanyRecord | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<CompanyRecord | null>(null)
-  const [snackbar, setSnackbar] = useState<{
-    message: string
-    severity: 'success' | 'error' | 'warning'
-  } | null>(null)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -104,9 +100,9 @@ export default function CompaniesPage() {
     try {
       await createMutation.mutateAsync(data)
       setFormOpen(false)
-      setSnackbar({ message: 'Azienda creata con successo.', severity: 'success' })
+      notify.success('Azienda creata con successo.')
     } catch {
-      setSnackbar({ message: 'Errore nella creazione dell\'azienda.', severity: 'error' })
+      notify.error('Errore nella creazione dell\'azienda.')
     }
   }
 
@@ -116,9 +112,9 @@ export default function CompaniesPage() {
       await updateMutation.mutateAsync({ id: editingCompany.id, data })
       setEditingCompany(null)
       setFormOpen(false)
-      setSnackbar({ message: 'Azienda aggiornata con successo.', severity: 'success' })
+      notify.success('Azienda aggiornata con successo.')
     } catch {
-      setSnackbar({ message: 'Errore nell\'aggiornamento dell\'azienda.', severity: 'error' })
+      notify.error('Errore nell\'aggiornamento dell\'azienda.')
     }
   }
 
@@ -127,9 +123,9 @@ export default function CompaniesPage() {
     try {
       await softDeleteMutation.mutateAsync(confirmDelete.id)
       setConfirmDelete(null)
-      setSnackbar({ message: 'Azienda disattivata.', severity: 'success' })
+      notify.success('Azienda disattivata.')
     } catch {
-      setSnackbar({ message: 'Errore nella disattivazione dell\'azienda.', severity: 'error' })
+      notify.error('Errore nella disattivazione dell\'azienda.')
     }
   }
 
@@ -331,18 +327,6 @@ export default function CompaniesPage() {
         isLoading={softDeleteMutation.isPending}
       />
 
-      <Snackbar
-        open={!!snackbar}
-        autoHideDuration={5000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        {snackbar ? (
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)}>
-            {snackbar.message}
-          </Alert>
-        ) : undefined}
-      </Snackbar>
     </Box>
   )
 }

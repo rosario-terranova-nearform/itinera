@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,8 +9,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Avatar from '@mui/material/Avatar'
-import Alert from '@mui/material/Alert'
-import Snackbar from '@mui/material/Snackbar'
 import InputAdornment from '@mui/material/InputAdornment'
 import CircularProgress from '@mui/material/CircularProgress'
 import PersonIcon from '@mui/icons-material/Person'
@@ -26,6 +24,7 @@ import {
 } from '@/hooks/useProfile'
 import { useAuth } from '@/hooks/useAuth'
 import { getDisplayName } from '@/types'
+import { notify } from '@/utils/toast'
 
 const profileSchema = z.object({
   first_name: z.string().trim().min(1, 'Nome obbligatorio'),
@@ -62,11 +61,6 @@ export default function RepProfilePage() {
   const uploadAvatarMutation = useUploadAvatarMutation()
   const updatePasswordMutation = useUpdatePasswordMutation()
 
-  const [snackbar, setSnackbar] = useState<{
-    message: string
-    severity: 'success' | 'error'
-  } | null>(null)
-
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     values: {
@@ -94,9 +88,9 @@ export default function RepProfilePage() {
   const handleProfileSave = profileForm.handleSubmit(async (data) => {
     try {
       await updateProfileMutation.mutateAsync({ id: authModel.id, data })
-      setSnackbar({ message: 'Profilo aggiornato con successo.', severity: 'success' })
+      notify.success('Profilo aggiornato con successo.')
     } catch {
-      setSnackbar({ message: 'Errore nell\'aggiornamento del profilo.', severity: 'error' })
+      notify.error('Errore nell\'aggiornamento del profilo.')
     }
   })
 
@@ -106,9 +100,9 @@ export default function RepProfilePage() {
 
     try {
       await uploadAvatarMutation.mutateAsync({ id: authModel.id, file })
-      setSnackbar({ message: 'Foto profilo aggiornata.', severity: 'success' })
+      notify.success('Foto profilo aggiornata.')
     } catch {
-      setSnackbar({ message: 'Errore nel caricamento della foto.', severity: 'error' })
+      notify.error('Errore nel caricamento della foto.')
     } finally {
       event.target.value = ''
     }
@@ -118,17 +112,14 @@ export default function RepProfilePage() {
     try {
       await updatePasswordMutation.mutateAsync({ id: authModel.id, data })
       passwordForm.reset()
-      setSnackbar({ message: 'Password aggiornata con successo.', severity: 'success' })
+      notify.success('Password aggiornata con successo.')
     } catch {
-      setSnackbar({
-        message: 'Errore nel cambio password. Verifica la password attuale.',
-        severity: 'error',
-      })
+      notify.error('Errore nel cambio password. Verifica la password attuale.')
     }
   })
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Impostazioni profilo
@@ -300,19 +291,6 @@ export default function RepProfilePage() {
           </Card>
         </Box>
       </Box>
-
-      <Snackbar
-        open={!!snackbar}
-        autoHideDuration={5000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        {snackbar ? (
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)}>
-            {snackbar.message}
-          </Alert>
-        ) : undefined}
-      </Snackbar>
     </Box>
   )
 }

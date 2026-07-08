@@ -48,7 +48,11 @@ function isNavActive(pathname: string, item: NavItem): boolean {
   return pathname === item.path || pathname.startsWith(`${item.path}/`)
 }
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  onNavigate?: () => void
+}
+
+export default function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const location = useLocation()
 
   return (
@@ -88,6 +92,7 @@ export default function AdminSidebar() {
               to={path}
               end={exact}
               selected={active}
+              onClick={onNavigate}
               aria-current={active ? 'page' : undefined}
               sx={{
                 borderRadius: 1,

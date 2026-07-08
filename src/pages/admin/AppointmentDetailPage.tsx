@@ -6,9 +6,8 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Button from '@mui/material/Button'
 import Alert from '@mui/material/Alert'
-import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
-import Snackbar from '@mui/material/Snackbar'
+import Skeleton from '@mui/material/Skeleton'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import EditIcon from '@mui/icons-material/Edit'
 import CancelIcon from '@mui/icons-material/Cancel'
@@ -32,6 +31,7 @@ import { getCompanyName, getRepresentativeName } from '@/api/appointments'
 import { useAuth } from '@/hooks/useAuth'
 import { getDisplayName } from '@/types'
 import { formatDateTime } from '@/utils/dateUtils'
+import { notify } from '@/utils/toast'
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -60,10 +60,6 @@ export default function AppointmentDetailPage() {
 
   const [editOpen, setEditOpen] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
-  const [snackbar, setSnackbar] = useState<{
-    message: string
-    severity: 'success' | 'error'
-  } | null>(null)
 
   const canEdit =
     appointment &&
@@ -89,12 +85,9 @@ export default function AppointmentDetailPage() {
         },
       })
       setEditOpen(false)
-      setSnackbar({
-        message: 'Appuntamento aggiornato. Il rappresentante riceverà una notifica.',
-        severity: 'success',
-      })
+      notify.success('Appuntamento aggiornato. Il rappresentante riceverà una notifica.')
     } catch {
-      setSnackbar({ message: 'Errore nell\'aggiornamento dell\'appuntamento.', severity: 'error' })
+      notify.error('Errore nell\'aggiornamento dell\'appuntamento.')
     }
   }
 
@@ -103,19 +96,18 @@ export default function AppointmentDetailPage() {
     try {
       await cancelMutation.mutateAsync(appointment.id)
       setConfirmCancel(false)
-      setSnackbar({
-        message: 'Appuntamento annullato. Il rappresentante riceverà una notifica.',
-        severity: 'success',
-      })
+      notify.success('Appuntamento annullato. Il rappresentante riceverà una notifica.')
     } catch {
-      setSnackbar({ message: 'Errore nell\'annullamento dell\'appuntamento.', severity: 'error' })
+      notify.error('Errore nell\'annullamento dell\'appuntamento.')
     }
   }
 
   if (isLoading) {
     return (
-      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress />
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Skeleton variant="text" width={200} height={40} sx={{ mb: 2 }} />
+        <Skeleton variant="rounded" height={280} sx={{ mb: 2 }} />
+        <Skeleton variant="rounded" height={200} />
       </Box>
     )
   }
@@ -287,19 +279,6 @@ export default function AppointmentDetailPage() {
         onCancel={() => setConfirmCancel(false)}
         isLoading={cancelMutation.isPending}
       />
-
-      <Snackbar
-        open={!!snackbar}
-        autoHideDuration={5000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        {snackbar ? (
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)}>
-            {snackbar.message}
-          </Alert>
-        ) : undefined}
-      </Snackbar>
     </Box>
   )
 }

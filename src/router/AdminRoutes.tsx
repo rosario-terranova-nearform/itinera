@@ -7,6 +7,8 @@ import CalendarPage from '@/pages/admin/CalendarPage'
 import AppointmentsPage from '@/pages/admin/AppointmentsPage'
 import AppointmentDetailPage from '@/pages/admin/AppointmentDetailPage'
 import DocumentsPortalPage from '@/pages/admin/DocumentsPortalPage'
+import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
+import NotFoundPage from '@/pages/NotFoundPage'
 
 export const adminRouteElements = (
   <>
@@ -18,7 +20,7 @@ export const adminRouteElements = (
     <Route path="companies" element={<CompaniesPage />} />
     <Route path="companies/:id" element={<CompanyDetailPage />} />
     <Route path="documents" element={<DocumentsPortalPage />} />
-    <Route path="settings" element={<AdminDashboardPage />} />
-    <Route path="*" element={<AdminDashboardPage />} />
+    <Route path="settings" element={<AdminSettingsPage />} />
+    <Route path="*" element={<NotFoundPage />} />
   </>
 )

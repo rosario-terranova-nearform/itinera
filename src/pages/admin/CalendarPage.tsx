@@ -6,7 +6,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Alert from '@mui/material/Alert'
-import CircularProgress from '@mui/material/CircularProgress'
 import AddIcon from '@mui/icons-material/Add'
 import ListIcon from '@mui/icons-material/List'
 import CalendarView, { type EventDropInfo } from '@/components/calendar/CalendarView'
@@ -14,6 +13,7 @@ import AppointmentDrawer from '@/components/calendar/AppointmentDrawer'
 import { shiftEndDatetime } from '@/components/calendar/calendarUtils'
 import AppointmentForm, { type AppointmentFormData } from '@/components/appointments/AppointmentForm'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
+import CalendarSkeleton from '@/components/common/CalendarSkeleton'
 import StatusChip from '@/components/common/StatusChip'
 import {
   useAppointmentsQuery,
@@ -25,6 +25,7 @@ import type { AppointmentRecord, AppointmentStatus } from '@/types'
 import { statusColors } from '@/theme/muiTheme'
 import { formatDateTime } from '@/utils/dateUtils'
 import { getCompanyName } from '@/api/appointments'
+import { notify } from '@/utils/toast'
 
 const STATUS_SUMMARY: Array<{ status: AppointmentStatus; label: string }> = [
   { status: 'pending', label: 'In attesa' },
@@ -58,15 +59,20 @@ export default function CalendarPage() {
 
   const handleCreate = async (data: AppointmentFormData) => {
     if (!authModel?.id) return
-    await createMutation.mutateAsync({
-      company: data.companyId,
-      representative: data.representativeId,
-      scheduled_datetime: data.scheduled_datetime.toISOString(),
-      notes: data.notes,
-      internal_notes: data.internal_notes,
-      created_by: authModel.id,
-    })
-    setFormOpen(false)
+    try {
+      await createMutation.mutateAsync({
+        company: data.companyId,
+        representative: data.representativeId,
+        scheduled_datetime: data.scheduled_datetime.toISOString(),
+        notes: data.notes,
+        internal_notes: data.internal_notes,
+        created_by: authModel.id,
+      })
+      setFormOpen(false)
+      notify.success('Appuntamento creato. Il rappresentante riceverà una notifica.')
+    } catch {
+      notify.error('Errore nella creazione dell\'appuntamento.')
+    }
   }
 
   const handleEventDrop = (info: EventDropInfo) => {
@@ -103,9 +109,11 @@ export default function CalendarPage() {
         },
       })
       setPendingDrop(null)
+      notify.success('Appuntamento spostato. Il rappresentante riceverà una notifica.')
     } catch {
       pendingDrop.revert()
       setPendingDrop(null)
+      notify.error('Errore nello spostamento dell\'appuntamento.')
     }
   }
 
@@ -167,9 +175,7 @@ export default function CalendarPage() {
 
       <Card variant="outlined" sx={{ p: { xs: 1, md: 2 } }}>
         {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress />
-          </Box>
+          <CalendarSkeleton height="calc(100vh - 320px)" />
         ) : (
           <CalendarView
             appointments={appointments}

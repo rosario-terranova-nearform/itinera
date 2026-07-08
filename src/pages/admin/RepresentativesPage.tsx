@@ -21,7 +21,6 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import Alert from '@mui/material/Alert'
-import Snackbar from '@mui/material/Snackbar'
 import CircularProgress from '@mui/material/CircularProgress'
 import InputAdornment from '@mui/material/InputAdornment'
 import PeopleIcon from '@mui/icons-material/People'
@@ -39,6 +38,10 @@ import {
   getCreateRepresentativeErrorMessage,
   getToggleRepresentativeActiveErrorMessage,
 } from '@/utils/userErrors'
+import ConfirmDialog from '@/components/common/ConfirmDialog'
+import EmptyState from '@/components/common/EmptyState'
+import TableSkeleton from '@/components/common/TableSkeleton'
+import { notify } from '@/utils/toast'
 
 const createRepSchema = z.object({
   first_name: z.string().min(1, 'Il nome è obbligatorio'),
@@ -97,10 +100,6 @@ export default function RepresentativesPage() {
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [confirmDeactivate, setConfirmDeactivate] = useState<UserRecord | null>(null)
-  const [snackbar, setSnackbar] = useState<{
-    message: string
-    severity: 'success' | 'error' | 'warning'
-  } | null>(null)
 
   const {
     register,
@@ -135,17 +134,15 @@ export default function RepresentativesPage() {
       const result = await createMutation.mutateAsync(data)
       reset()
       setCreateOpen(false)
-      setSnackbar({
-        message: result.welcomeEmailSent
-          ? 'Rappresentante creato. Email di benvenuto inviata.'
-          : 'Rappresentante creato. Email di benvenuto non inviata: verifica le impostazioni SMTP in PocketBase.',
-        severity: result.welcomeEmailSent ? 'success' : 'warning',
-      })
+      if (result.welcomeEmailSent) {
+        notify.success('Rappresentante creato. Email di benvenuto inviata.')
+      } else {
+        notify.warning(
+          'Rappresentante creato. Email di benvenuto non inviata: verifica le impostazioni SMTP in PocketBase.',
+        )
+      }
     } catch (err) {
-      setSnackbar({
-        message: getCreateRepresentativeErrorMessage(err),
-        severity: 'error',
-      })
+      notify.error(getCreateRepresentativeErrorMessage(err))
     }
   })
 
@@ -153,17 +150,9 @@ export default function RepresentativesPage() {
     try {
       await toggleMutation.mutateAsync({ id: rep.id, is_active })
       setConfirmDeactivate(null)
-      setSnackbar({
-        message: is_active
-          ? 'Rappresentante riattivato.'
-          : 'Rappresentante disattivato.',
-        severity: 'success',
-      })
+      notify.success(is_active ? 'Rappresentante riattivato.' : 'Rappresentante disattivato.')
     } catch (err) {
-      setSnackbar({
-        message: getToggleRepresentativeActiveErrorMessage(err),
-        severity: 'error',
-      })
+      notify.error(getToggleRepresentativeActiveErrorMessage(err))
     }
   }
 
@@ -240,34 +229,38 @@ export default function RepresentativesPage() {
         </Alert>
       )}
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nome</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Telefono</TableCell>
-              <TableCell>Stato</TableCell>
-              <TableCell align="right">Azioni</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
+      {isLoading ? (
+        <TableSkeleton rows={4} columns={5} />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title="Nessun rappresentante"
+          description={
+            search.trim()
+              ? 'Nessun rappresentante corrisponde alla ricerca.'
+              : 'Non ci sono ancora rappresentanti registrati.'
+          }
+          action={
+            !search.trim() ? (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+                Nuovo rappresentante
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                  <CircularProgress size={28} />
-                </TableCell>
+                <TableCell>Nome</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Telefono</TableCell>
+                <TableCell>Stato</TableCell>
+                <TableCell align="right">Azioni</TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                  <Typography color="text.secondary">
-                    Nessun rappresentante trovato.
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((rep) => {
+            </TableHead>
+            <TableBody>
+              {filtered.map((rep) => {
                 const active = rep.is_active !== false
                 return (
                   <TableRow key={rep.id} hover>
@@ -307,11 +300,11 @@ export default function RepresentativesPage() {
                     </TableCell>
                   </TableRow>
                 )
-              })
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <Dialog
         open={createOpen}
@@ -360,45 +353,20 @@ export default function RepresentativesPage() {
         </Box>
       </Dialog>
 
-      <Dialog
+      <ConfirmDialog
         open={!!confirmDeactivate}
-        onClose={() => !toggleMutation.isPending && setConfirmDeactivate(null)}
-      >
-        <DialogTitle>Disattivare il rappresentante?</DialogTitle>
-        <DialogContent>
-          <Typography>
-            {confirmDeactivate
-              ? `${getDisplayName(confirmDeactivate)} non potrà più accedere all'applicazione.`
-              : ''}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDeactivate(null)} disabled={toggleMutation.isPending}>
-            Annulla
-          </Button>
-          <Button
-            color="warning"
-            variant="contained"
-            disabled={toggleMutation.isPending}
-            onClick={() => confirmDeactivate && handleToggleActive(confirmDeactivate, false)}
-          >
-            {toggleMutation.isPending ? <CircularProgress size={22} color="inherit" /> : 'Disattiva'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={!!snackbar}
-        autoHideDuration={5000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        {snackbar ? (
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)}>
-            {snackbar.message}
-          </Alert>
-        ) : undefined}
-      </Snackbar>
+        title="Disattivare il rappresentante?"
+        message={
+          confirmDeactivate
+            ? `${getDisplayName(confirmDeactivate)} non potrà più accedere all'applicazione.`
+            : ''
+        }
+        confirmLabel="Disattiva"
+        confirmColor="warning"
+        onConfirm={() => confirmDeactivate && handleToggleActive(confirmDeactivate, false)}
+        onCancel={() => setConfirmDeactivate(null)}
+        isLoading={toggleMutation.isPending}
+      />
     </Box>
   )
 }

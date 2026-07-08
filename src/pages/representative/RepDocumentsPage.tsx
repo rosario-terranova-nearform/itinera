@@ -6,11 +6,11 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Alert from '@mui/material/Alert'
-import CircularProgress from '@mui/material/CircularProgress'
-import Snackbar from '@mui/material/Snackbar'
+import Skeleton from '@mui/material/Skeleton'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import FileUploadZone from '@/components/common/FileUploadZone'
+import EmptyState from '@/components/common/EmptyState'
 import DocumentListItem from '@/components/documents/DocumentListItem'
 import DocumentStatusSummary from '@/components/documents/DocumentStatusSummary'
 import { getCompanyName } from '@/api/appointments'
@@ -24,6 +24,8 @@ import {
 import { useAuth } from '@/hooks/useAuth'
 import { getDisplayName } from '@/types'
 import { formatDateTime } from '@/utils/dateUtils'
+import { notify } from '@/utils/toast'
+import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined'
 
 export default function RepDocumentsPage() {
   const navigate = useNavigate()
@@ -47,10 +49,6 @@ export default function RepDocumentsPage() {
   const [notes, setNotes] = useState('')
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
-  const [snackbar, setSnackbar] = useState<{
-    message: string
-    severity: 'success' | 'error'
-  } | null>(null)
 
   const uploadMutation = useUploadSignedSheetMutation()
 
@@ -110,17 +108,14 @@ export default function RepDocumentsPage() {
       setSelectedFile(null)
       setNotes('')
       setUploadProgress(null)
-      setSnackbar({
-        message: 'Foglio firma caricato. L\'Unità Centrale riceverà una notifica.',
-        severity: 'success',
-      })
+      notify.success('Foglio firma caricato. L\'Unità Centrale riceverà una notifica.')
       navigate(`/rep/appointments/${selectedAppointment.id}`)
     } catch (error) {
       setUploadProgress(null)
       const message =
         error instanceof Error ? error.message : 'Errore nel caricamento del foglio firma.'
       setUploadError(message)
-      setSnackbar({ message, severity: 'error' })
+      notify.error(message)
     }
   }
 
@@ -128,7 +123,7 @@ export default function RepDocumentsPage() {
   const summary = summarizeRepSheets(uploadedSheets)
 
   return (
-    <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 800, mx: 'auto' }}>
       <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
         I miei documenti
       </Typography>
@@ -152,13 +147,13 @@ export default function RepDocumentsPage() {
           </Typography>
 
           {isLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-              <CircularProgress />
-            </Box>
+            <Skeleton variant="rounded" height={200} />
           ) : uploadableAppointments.length === 0 ? (
-            <Alert severity="info">
-              Nessuna visita confermata in attesa di foglio firma.
-            </Alert>
+            <EmptyState
+              title="Nessuna visita in attesa"
+              description="Non ci sono visite confermate in attesa di foglio firma."
+              icon={<UploadFileOutlinedIcon sx={{ fontSize: 36 }} />}
+            />
           ) : (
             <>
               <TextField
@@ -231,13 +226,12 @@ export default function RepDocumentsPage() {
           </Typography>
 
           {sheetsLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-              <CircularProgress size={28} />
-            </Box>
+            <Skeleton variant="rounded" height={120} />
           ) : uploadedSheets.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              Nessun documento caricato.
-            </Typography>
+            <EmptyState
+              title="Nessun documento"
+              description="Non hai ancora caricato fogli firma."
+            />
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               {uploadedSheets.map((sheet) => {
@@ -262,19 +256,6 @@ export default function RepDocumentsPage() {
           )}
         </CardContent>
       </Card>
-
-      <Snackbar
-        open={!!snackbar}
-        autoHideDuration={5000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        {snackbar ? (
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)}>
-            {snackbar.message}
-          </Alert>
-        ) : undefined}
-      </Snackbar>
     </Box>
   )
 }

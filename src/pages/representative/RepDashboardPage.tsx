@@ -6,10 +6,11 @@ import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import Alert from '@mui/material/Alert'
-import CircularProgress from '@mui/material/CircularProgress'
+import Skeleton from '@mui/material/Skeleton'
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import NextVisitCard from '@/components/appointments/NextVisitCard'
+import EmptyState from '@/components/common/EmptyState'
 import StatusChip from '@/components/common/StatusChip'
 import { buildCompanyFullAddress, getCompanyName } from '@/api/appointments'
 import { useRepUpcomingAppointmentsQuery } from '@/hooks/useAppointments'
@@ -92,7 +93,7 @@ export default function RepDashboardPage() {
   ]
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Panoramica
@@ -109,8 +110,9 @@ export default function RepDashboardPage() {
       ) : null}
 
       {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
+        <Box>
+          <Skeleton variant="rounded" height={160} sx={{ mb: 3 }} />
+          <Skeleton variant="rounded" height={240} />
         </Box>
       ) : (
         <>
@@ -118,14 +120,10 @@ export default function RepDashboardPage() {
             {nextVisit ? (
               <NextVisitCard appointment={nextVisit} />
             ) : (
-              <Card variant="outlined" sx={{ p: 3 }}>
-                <Typography variant="h4" sx={{ mb: 0.5 }}>
-                  Nessuna visita in programma
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Non hai appuntamenti futuri al momento.
-                </Typography>
-              </Card>
+              <EmptyState
+                title="Nessuna visita in programma"
+                description="Non hai appuntamenti futuri al momento."
+              />
             )}
           </Box>
 
