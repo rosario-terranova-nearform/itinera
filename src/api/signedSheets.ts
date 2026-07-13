@@ -80,7 +80,7 @@ function createSignedSheetWithProgress(
 export async function getByAppointmentId(appointmentId: string): Promise<SignedSheetRecord | null> {
   try {
     return await pb.collection('signed_sheets').getFirstListItem<SignedSheetRecord>(
-      `appointment = "${appointmentId}"`,
+      pb.filter('appointment = {:appointmentId}', { appointmentId }),
     )
   } catch {
     return null
@@ -95,23 +95,28 @@ export type SignedSheetsFilter = {
 
 export async function getAll(filter?: SignedSheetsFilter): Promise<SignedSheetRecord[]> {
   const parts: string[] = []
+  const params: Record<string, string | boolean> = {}
 
   if (filter?.viewed === true) {
-    parts.push('viewed_by_admin = true')
+    parts.push('viewed_by_admin = {:viewed}')
+    params.viewed = true
   } else if (filter?.viewed === false) {
-    parts.push('viewed_by_admin = false')
+    parts.push('viewed_by_admin = {:viewed}')
+    params.viewed = false
   }
 
   if (filter?.representativeId) {
-    parts.push(`uploaded_by = "${filter.representativeId}"`)
+    parts.push('uploaded_by = {:representativeId}')
+    params.representativeId = filter.representativeId
   }
 
   if (filter?.search?.trim()) {
-    parts.push(`file_name ~ "${filter.search.trim()}"`)
+    parts.push('file_name ~ {:search}')
+    params.search = filter.search.trim()
   }
 
   return pb.collection('signed_sheets').getFullList<SignedSheetRecord>({
-    filter: parts.length > 0 ? parts.join(' && ') : undefined,
+    filter: parts.length > 0 ? pb.filter(parts.join(' && '), params) : undefined,
     sort: '-created',
     expand: 'appointment,uploaded_by,appointment.company',
   })
@@ -119,7 +124,7 @@ export async function getAll(filter?: SignedSheetsFilter): Promise<SignedSheetRe
 
 export async function getByRepresentative(representativeId: string): Promise<SignedSheetRecord[]> {
   return pb.collection('signed_sheets').getFullList<SignedSheetRecord>({
-    filter: `uploaded_by = "${representativeId}"`,
+    filter: pb.filter('uploaded_by = {:representativeId}', { representativeId }),
     sort: '-created',
     expand: 'appointment,appointment.company',
   })

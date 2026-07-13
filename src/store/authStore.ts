@@ -50,12 +50,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   init: () => {
     set({
-      authModel: pb.authStore.model as UserRecord | null,
+      authModel: pb.authStore.isValid ? (pb.authStore.model as UserRecord | null) : null,
       isLoading: false,
     })
 
     const unsubscribe = pb.authStore.onChange((_token, model) => {
-      set({ authModel: (model as UserRecord) ?? null })
+      set({
+        authModel: pb.authStore.isValid ? ((model as UserRecord) ?? null) : null,
+      })
     })
 
     return unsubscribe

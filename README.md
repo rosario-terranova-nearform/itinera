@@ -79,6 +79,10 @@ npm run pb:typegen
 | `npm run build` | Build produzione |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript check |
+| `npm run test` | Esegue tutti i test Vitest |
+| `npm run test:unit` | Unit test frontend (Vitest) |
+| `npm run test:integration` | Test integrazione PocketBase (richiede PB in esecuzione) |
+| `npm run test:e2e` | Test E2E Playwright (avvia PB + preview automaticamente) |
 | `npm run pb:dev` | Avvia PocketBase |
 | `npm run pb:migrate` | Applica migration |
 | `npm run pb:migrate:redo` | Reset e riapplica tutte le migration |
@@ -95,3 +99,47 @@ Password per tutti gli account: **`password123`**
 | Rep | `luca.bianchi@itinera.it` |
 | Rep | `sara.verdi@itinera.it` |
 | Rep | `marco.gialli@itinera.it` |
+
+## Deploy in produzione
+
+### Frontend (SPA)
+
+1. Imposta `VITE_PB_URL` al dominio HTTPS di PocketBase (es. `https://api.itinera.example`).
+2. Esegui `npm run build` e servi la cartella `dist/` da CDN o reverse proxy statico.
+3. Configura il reverse proxy con fallback SPA (`try_files $uri /index.html`).
+
+### PocketBase
+
+1. **HTTPS**: esponi PocketBase solo dietro reverse proxy (Caddy, nginx) con TLS terminato sul proxy.
+2. **CORS**: in Admin UI → Settings → Application, limita `Allowed origins` al dominio frontend (es. `https://app.itinera.example`).
+3. **Rate limiting**: abilita in Settings → Application → Rate limits (consigliato: 100 req/min per IP su API pubbliche).
+4. **`PB_ENCRYPTION`**: imposta una chiave forte prima del primo avvio in produzione:
+   ```bash
+   export PB_ENCRYPTION="$(openssl rand -base64 32)"
+   ./pocketbase serve
+   ```
+   Senza questa variabile i dati sensibili in settings non sono cifrati a riposo.
+5. **Backup**: pianifica backup periodici di `pb_data/` (SQLite + storage file).
+6. **SMTP**: configura un provider reale (Resend, SendGrid, ecc.) per le notifiche email.
+
+### Esempio Caddy
+
+```caddyfile
+app.itinera.example {
+  root * /var/www/itinera/dist
+  try_files {path} /index.html
+  file_server
+}
+
+api.itinera.example {
+  reverse_proxy 127.0.0.1:8090
+}
+```
+
+### Sicurezza
+
+Vedi [docs/security/api-rules-audit.md](docs/security/api-rules-audit.md) per l'audit delle API rules e gli hook server-side (fase 12).
+
+### CI
+
+GitHub Actions esegue lint, typecheck, unit test, build e (su `main`) test E2E. I test di integrazione richiedono PocketBase avviato localmente o in CI.

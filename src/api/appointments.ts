@@ -162,7 +162,7 @@ export async function getByIdForRep(id: string): Promise<AppointmentRecord> {
 
 export async function getByCompany(companyId: string): Promise<AppointmentRecord[]> {
   return pb.collection('appointments').getFullList<AppointmentRecord>({
-    filter: `company = "${companyId}"`,
+    filter: pb.filter('company = {:companyId}', { companyId }),
     sort: '-scheduled_datetime',
     expand: 'representative,created_by',
   })
@@ -172,7 +172,7 @@ export async function getModifications(
   appointmentId: string,
 ): Promise<AppointmentModificationRecord[]> {
   return pb.collection('appointment_modifications').getFullList<AppointmentModificationRecord>({
-    filter: `appointment = "${appointmentId}"`,
+    filter: pb.filter('appointment = {:appointmentId}', { appointmentId }),
     sort: 'created',
     expand: 'modified_by',
   })
@@ -341,24 +341,29 @@ export function buildAppointmentsFilter(options: {
   activeOnly?: boolean
 }): string | undefined {
   const parts: string[] = []
+  const params: Record<string, string> = {}
 
   if (options.status) {
-    parts.push(`status = "${options.status}"`)
+    parts.push('status = {:status}')
+    params.status = options.status
   }
   if (options.activeOnly) {
     parts.push('status != "cancelled" && status != "completed"')
   }
   if (options.representativeId) {
-    parts.push(`representative = "${options.representativeId}"`)
+    parts.push('representative = {:representativeId}')
+    params.representativeId = options.representativeId
   }
   if (options.dateFrom) {
-    parts.push(`scheduled_datetime >= "${options.dateFrom}"`)
+    parts.push('scheduled_datetime >= {:dateFrom}')
+    params.dateFrom = options.dateFrom
   }
   if (options.dateTo) {
-    parts.push(`scheduled_datetime <= "${options.dateTo}"`)
+    parts.push('scheduled_datetime <= {:dateTo}')
+    params.dateTo = options.dateTo
   }
 
-  return parts.length > 0 ? parts.join(' && ') : undefined
+  return parts.length > 0 ? pb.filter(parts.join(' && '), params) : undefined
 }
 
 export function buildCompanyFullAddress(company?: CompanyRecord): string {
